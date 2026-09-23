@@ -1,0 +1,30 @@
+schema_version: 2
+root_path: .
+dab_resource_path: resources
+
+settings:
+  mode: env
+  source_target: dev
+  targets:
+    - name: test
+      replacements:
+        my_catalog_dev: my_catalog_test
+    - name: prod
+      replacements:
+        my_catalog_dev: my_catalog_prod
+
+assets:
+  dashboards:
+    path: dashboards
+  genie:
+    path: genie
+
+lint:
+  genie:
+    rules:
+      #example config
+      source_count:
+        severity: warn
+        threshold: 0
+        maximum_sources: 12
+        warning_sources: 9

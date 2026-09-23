@@ -1,0 +1,49 @@
+[settings]
+python.uv_venv_auto = "source"
+
+[env]
+HK_MISE = 1
+_.python.venv = { path = ".venv" }
+
+[tools]
+databricks-cli = "1.17.0"
+ruff = "latest"
+ty = "latest"
+typos = "latest"
+uv = "latest"
+
+[tasks.sync]
+run = "uv sync"
+
+[tasks."skill-sync"]
+run = "uv run python scripts/sync_skill.py"
+
+[tasks."skill-check"]
+run = "uv run python scripts/sync_skill.py --check"
+
+[tasks.readme]
+run = "uv run python scripts/update_readme.py"
+
+[tasks."readme-check"]
+run = "uv run python scripts/update_readme.py --check"
+
+[tasks.test]
+run = "uv run pytest"
+
+[tasks.lint]
+run = "ruff check src/lamp_ops tests scripts"
+
+[tasks.format-check]
+run = "ruff format --check src/lamp_ops tests scripts"
+
+[tasks.typecheck]
+run = "ty check src/lamp_ops tests scripts"
+
+[tasks.spelling]
+run = "typos src/lamp_ops tests scripts"
+
+[tasks.verify]
+depends = ["test", "lint", "format-check", "typecheck", "spelling", "readme-check", "skill-check"]
+
+[tasks.build]
+run = "uv build"

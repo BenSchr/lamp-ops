@@ -1,0 +1,43 @@
+[project]
+name = "lamp-ops"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "BenSchr" }]
+dependencies = [
+  "databricks-sdk>=0.140.0",
+  "pydantic-settings>=2.15.0",
+  "pyyaml>=6.0.3",
+  "rich>=15.0.0",
+  "typer>=0.27.2",
+]
+
+[project.urls]
+Documentation = "https://github.com/benschr/lamp-ops"
+Homepage = "https://github.com/benschr/lamp-ops"
+Repository = "https://github.com/benschr/lamp-ops"
+
+[project.scripts]
+lamp = "lamp_ops.cli:app"
+
+[dependency-groups]
+dev = [
+  "pytest>=9.1.1",
+]
+
+[build-system]
+requires = ["uv_build >= 0.12.17, <0.13.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+lint.ignore = ["RET504", "ISC004", "SIM105", "EXE002"]
+
+[tool.uv]
+package = true

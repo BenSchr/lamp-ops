@@ -1,0 +1,8 @@
+resources:
+  genie_spaces:
+    test_agent:
+      title: "Test agent"
+      warehouse_id: 1234
+      file_path: ../genie_agents/test_agent.geniespace.json
+      description: |-
+        This agent is used for testing purposes.

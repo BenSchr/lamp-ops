@@ -1,0 +1,12 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Reporting
+    about: Please report security vulnerabilities privately like described in
+      SECURITY.md
+    url: https://github.com/BenSchr/lamp-ops/blob/main/.github/SECURITY.md
+  - name: Question or Problem
+    about: Ask a question or ask about a problem in GitHub Discussions.
+    url: https://github.com/BenSchr/lamp-ops/discussions/categories/q-a
+  - name: Show and tell
+    about: Show what you built with Typer or to be used with Typer.
+    url: https://github.com/fastapi/typer/discussions/categories/show-and-tell

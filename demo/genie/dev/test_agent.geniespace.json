@@ -1,0 +1,108 @@
+{
+  "version": 2,
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "my_catalog_dev.default.example_hosts",
+        "column_configs": [
+          {
+            "column_name": "host_city",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "host_id",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "host_name",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "host_since",
+            "enable_format_assistance": true
+          }
+        ]
+      },
+      {
+        "identifier": "my_catalog_dev.default.example_listings",
+        "column_configs": [
+          {
+            "column_name": "availability_365",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "host_id",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "listing_id",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "listing_name",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "price",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "room_type",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          }
+        ]
+      },
+      {
+        "identifier": "my_catalog_dev.default.example_listings_metrics",
+        "column_configs": [
+          {
+            "column_name": "avg_price"
+          },
+          {
+            "column_name": "host_city",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "listing_count"
+          },
+          {
+            "column_name": "listing_month",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "room_type",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "total_availability"
+          }
+        ]
+      }
+    ]
+  },
+  "instructions": {
+    "join_specs": [
+      {
+        "id": "12345",
+        "left": {
+          "identifier": "my_catalog_dev.default.example_listings",
+          "alias": "example_listings"
+        },
+        "right": {
+          "identifier": "my_catalog_dev.default.example_hosts",
+          "alias": "example_hosts"
+        },
+        "sql": [
+          "`example_listings`.`host_id` = `example_hosts`.`host_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "name": "lamp-ops",
+  "description": "Set up and use the lamp-ops CLI to promote and lint Databricks dashboards and Genie agents."
+}
