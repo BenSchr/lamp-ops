@@ -39,7 +39,7 @@ assets:
   dashboards:
     path: ./dashboards
   genie:
-    path: ./geniexy
+    path: ./genie
 ```
 
 Shared `settings` apply to every discovered asset.
