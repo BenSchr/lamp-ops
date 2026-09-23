@@ -90,7 +90,7 @@ commands accept optional identifiers or config-root-relative source paths.
 
 ```text
 uv run lamp promote --dry-run
-uv run lamp promote dashboards usage_insights
+uv run lamp promote dashboards sales_insights
 uv run lamp promote genie --force
 ```
 
@@ -135,18 +135,18 @@ Rule criteria use descriptive settings instead of overloading `threshold`:
 
 ```yaml
 lint:
-	genie:
-		rules:
-			source_count:
-				severity: error
-				threshold: 0
-				maximum_sources: 12
-				warning_sources: 9
-			benchmarks:
-				severity: warn
-				threshold: 0
-				minimum_questions: 10
-				recommended_questions: 20
+  genie:
+    rules:
+      source_count:
+        severity: error
+        threshold: 0
+        maximum_sources: 12
+        warning_sources: 9
+      benchmarks:
+        severity: warn
+        threshold: 0
+        minimum_questions: 10
+        recommended_questions: 20
 ```
 
 `threshold` always counts failing Genie agents tolerated for that rule before
