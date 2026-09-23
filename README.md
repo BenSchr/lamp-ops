@@ -5,6 +5,7 @@
 `lamp` promotes Databricks AI/BI dashboard and Genie JSON between configured
 environments and statically checks asset configuration.
 
+
 ## Contents
 
 <!-- BEGIN GENERATED TOC -->
@@ -21,12 +22,50 @@ environments and statically checks asset configuration.
 
 ## Setup
 
-Install the locked development environment with `uv sync`; the devcontainer runs
-`mise run sync` automatically when it is created. Run the CLI with `uv run lamp`;
-it searches the current directory and its ancestors for
-`lamp_config.yaml`, `lamp_config.yml`, `.lamp_config.yaml`, or `.lamp_config.yml`
-(in that order within each directory). Override discovery with the root option
-`--config/-c` before the command name.
+```bash
+uv add --dev lamp-ops
+```
+
+
+Configure `.lamp_config.yaml`. Example:
+```yaml
+schema_version: 2
+root_path: .
+dab_resource_path: resources
+
+settings:
+  mode: env
+  source_target: dev
+  targets:
+    - name: test
+      replacements:
+        my_catalog_dev: my_catalog_test
+    - name: prod
+      replacements:
+        my_catalog_dev: my_catalog_prod
+
+assets:
+  dashboards:
+    path: dashboards
+  genie:
+    path: genie
+```
+
+When you have following setup:
+
+```
+.lamp_config.yaml
+dashboards/        # Dashboard JSON files
+  dev/             # DAB generate target
+  test/
+  prod/
+genie/             # Genie agent JSON files
+  dev/             # DAB generate target
+  test/
+  prod/
+ressources/        # DAB resources
+[...]
+```
 
 ## Configuration
 

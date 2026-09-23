@@ -19,12 +19,12 @@ assets:
   genie:
     path: genie
 
-lint:
-  genie:
-    rules:
-      #example config
-      source_count:
-        severity: warn
-        threshold: 0
-        maximum_sources: 12
-        warning_sources: 9
+# lint:
+#   genie:
+#     rules:
+#       #example config
+#       source_count:
+#         severity: warn
+#         threshold: 0
+#         maximum_sources: 12
+#         warning_sources: 9
