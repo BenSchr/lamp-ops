@@ -1,8 +1,14 @@
-resources:
-  genie_spaces:
-    test_agent:
-      title: "Test agent"
-      warehouse_id: 1234
-      file_path: ../genie/${bundle.target}/test_agent.geniespace.json
-      description: |-
-        This agent is used for testing purposes.
+targets:
+  dev:
+    resources: &genie_resources
+      genie_spaces:
+        test_agent:
+          title: Lamp Ops - ${var.catalog} - sales agent
+          warehouse_id: ${var.warehouse_id}
+          file_path: ../../genie/${var.asset_dir}/test_agent.geniespace.json
+          description: Explore synthetic sales revenue, orders, regions, and products.
+          permissions:
+            - level: CAN_RUN
+              group_name: account users
+  prod:
+    resources: *genie_resources

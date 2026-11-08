@@ -325,4 +325,14 @@ scratch/**
 .devcontainer/
 .vscode/
 */**/databricks.yml
-AGENTS.md
+!demo/databricks.yml
+
+# APM dependencies
+apm_modules/
+
+# Local outputs of mise run demo-policy
+demo/bundle-summary.json
+demo/bundle.schema.json
+demo/policy-report.json
+demo/demo.duckdb
+demo/demo.duckdb.wal

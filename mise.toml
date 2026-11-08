@@ -6,7 +6,9 @@ HK_MISE = 1
 _.python.venv = { path = ".venv" }
 
 [tools]
-databricks-cli = "1.17.0"
+claude = "latest"
+databricks-cli = "latest"
+duckdb = "latest"
 ruff = "latest"
 ty = "latest"
 typos = "latest"
@@ -27,6 +29,14 @@ run = "uv run python scripts/update_readme.py"
 [tasks."readme-check"]
 run = "uv run python scripts/update_readme.py --check"
 
+[tasks.schema]
+description = "Write the Lamp configuration and policy JSON Schema used by editors"
+run = "uv run lamp config schema --output-path lamp_config.schema.json"
+
+[tasks."schema-check"]
+description = "Fail when lamp_config.schema.json is out of date"
+run = "uv run lamp config schema | cmp -s - lamp_config.schema.json || { echo 'lamp_config.schema.json is out of date; run mise run schema' >&2; exit 1; }"
+
 [tasks.test]
 run = "uv run pytest"
 
@@ -43,7 +53,35 @@ run = "ty check src/lamp_ops tests scripts"
 run = "typos src/lamp_ops tests scripts"
 
 [tasks.verify]
-depends = ["test", "lint", "format-check", "typecheck", "spelling", "readme-check", "skill-check"]
+depends = [
+  "test",
+  "lint",
+  "format-check",
+  "typecheck",
+  "spelling",
+  "readme-check",
+  "skill-check",
+  "schema-check",
+]
+
+[tasks.bump]
+description = "Bump the project version in pyproject.toml and uv.lock"
+usage = """
+arg "[level]" help="Bump level for uv version --bump: major, minor, patch, alpha, beta, rc, ..." default="patch"
+flag "--dry-run" help="Show the new version without writing it"
+"""
+run = "uv version --bump {{usage.level}}{% if usage.dry_run %} --dry-run{% endif %}"
 
 [tasks.build]
 run = "uv build"
+
+[tasks."demo-policy"]
+description = "Check the demo bundle summary with Lamp policies and open the result in the DuckDB UI"
+dir = "demo"
+usage = 'arg "[target]" help="Bundle target to summarize" default="dev"'
+run = """
+databricks bundle summary -t {{usage.target}} -o json > bundle-summary.json
+uv run lamp policy --input bundle-summary.json --schema bundle.schema.json \
+  --store demo.duckdb --output-path policy-report.json || true
+duckdb -ui demo.duckdb
+"""

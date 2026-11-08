@@ -1,0 +1,60 @@
+bundle:
+  name: lamp-ops-demo
+  databricks_cli_version: ">= 1.22.1"
+
+include:
+  - resources/*.yml
+  - resources/**/*.yml
+
+python:
+  venv_path: ../.venv
+  resources:
+    - resources.pydabs_job:load_resources
+  mutators:
+    - lamp_ops.bundles:mutate_dashboards
+    - lamp_ops.bundles:mutate_genie_spaces
+
+workspace:
+  profile: private
+
+variables:
+  catalog:
+    description: Catalog the dashboard and Genie agent query.
+    default: lamp_ops_dev
+  dev_catalog:
+    description: Development catalog provisioned by the setup target.
+    default: lamp_ops_dev
+  prod_catalog:
+    description: Production catalog provisioned by the setup target.
+    default: lamp_ops_prod
+  asset_dir:
+    description: Asset folder to deploy; dev uses Lamp mutators, a promoted folder uses lamp promote output.
+    default: dev
+  warehouse_id:
+    description: Serverless SQL warehouse shared by the dashboard and Genie.
+    lookup:
+      warehouse: Serverless Starter Warehouse
+  lamp_replacements:
+    description: Lamp replacements for the demo.
+    type: complex
+    default:
+      lamp_ops_dev: lamp_ops_prod
+
+permissions:
+  - level: CAN_MANAGE
+    user_name: ${workspace.current_user.userName}
+
+presets:
+  tags:
+    test_tag: "test_value"
+
+targets:
+  setup:
+    default: true
+  dev:
+    variables:
+      catalog: lamp_ops_dev
+      lamp_replacements: {}
+  prod:
+    variables:
+      catalog: lamp_ops_prod

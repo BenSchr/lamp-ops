@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
-from lamp_ops.config import LampConfig, LampError
+from lamp_ops.config import LampConfig
+from lamp_ops.errors import LampError
 from lamp_ops.linting.genie.rules import RULES, JsonObject
 from lamp_ops.linting.results import AssetReport, CheckResult, CheckStatus
 from lamp_ops.promotion import DiscoveredAsset, discover_assets
@@ -23,38 +24,62 @@ METADATA_RULE_IDS = {2, 3}
 METADATA_WORKERS = 8
 
 
-def _bundle_spaces(config: LampConfig) -> tuple[dict[Path, JsonObject], dict[str, JsonObject]]:
-    """Index bundle Genie resources once per lint run, by source path and resource key."""
-    configured = config.dab_resource_path
-    if configured is None:
-        return {}, {}
-    base = config.config_path.parent
-    if configured.is_absolute():
-        raise LampError(f"Configured paths must be relative: {configured}")
-    directory = (base / configured).resolve()
-    if not directory.is_relative_to(base):
-        raise LampError(f"Configured path escapes configuration directory: {configured}")
-    by_path: dict[Path, JsonObject] = {}
-    by_key: dict[str, JsonObject] = {}
+BundleSpaces = dict[str | None, tuple[dict[Path, JsonObject], dict[str, JsonObject]]]
+
+
+def _bundle_spaces(config: LampConfig) -> BundleSpaces:
+    """Index bundle Genie resources once per lint run, per bundle target.
+
+    Top-level `resources` are stored under `None`; `targets.<name>.resources` under `<name>`.
+    """
+    if config.dab_resource_path is None:
+        return {}
+    directory = config.resolve_config_path(config.dab_resource_path)
+    index: BundleSpaces = {}
     if not directory.is_dir():
-        return by_path, by_key
+        return index
     for path in sorted((*directory.rglob("*.yml"), *directory.rglob("*.yaml"))):
         try:
             data = yaml.safe_load(path.read_text(encoding="utf-8"))
         except yaml.YAMLError as error:
             raise LampError(f"Invalid YAML in {path}: {error}") from error
-        resources = data.get("resources") if isinstance(data, dict) else None
-        spaces = resources.get("genie_spaces") if isinstance(resources, dict) else None
-        if not isinstance(spaces, dict):
+        if not isinstance(data, dict):
             continue
-        for key, space in spaces.items():
-            if not isinstance(space, dict):
+        scopes: list[tuple[str | None, Any]] = [(None, data.get("resources"))]
+        targets = data.get("targets")
+        if isinstance(targets, dict):
+            scopes.extend(
+                (str(name), target.get("resources"))
+                for name, target in targets.items()
+                if isinstance(target, dict)
+            )
+        for target_name, resources in scopes:
+            spaces = resources.get("genie_spaces") if isinstance(resources, dict) else None
+            if not isinstance(spaces, dict):
                 continue
-            by_key[str(key)] = space
-            file_path = space.get("file_path")
-            if isinstance(file_path, str) and file_path:
-                by_path[(path.parent / file_path).resolve()] = space
-    return by_path, by_key
+            by_path, by_key = index.setdefault(target_name, ({}, {}))
+            for key, space in spaces.items():
+                if not isinstance(space, dict):
+                    continue
+                by_key[str(key)] = space
+                file_path = space.get("file_path")
+                if isinstance(file_path, str) and file_path:
+                    by_path[(path.parent / file_path).resolve()] = space
+    return index
+
+
+def _find_bundle_space(
+    index: BundleSpaces, config: LampConfig, asset: DiscoveredAsset
+) -> JsonObject | None:
+    """Prefer the asset's source target over top-level resources; path beats key."""
+    environment = asset.config.source_target or config.settings.source_target
+    for scope in (environment, None):
+        by_path, by_key = index.get(scope, ({}, {}))
+        if asset.source in by_path:
+            return by_path[asset.source]
+        if asset.identifier in by_key:
+            return by_key[asset.identifier]
+    return None
 
 
 def _is_excluded(config: LampConfig, identifier: str, path) -> bool:
@@ -199,15 +224,13 @@ def lint_genie(
                 metadata_error = "Databricks authentication unavailable; check --profile or log in"
         if identifiers and client is not None:
             metadata_cache = _fetch_metadata(client, identifiers)
-    spaces_by_path, spaces_by_key = (
-        _bundle_spaces(config) if config.lint.genie.rules.agent_description.enabled else ({}, {})
+    bundle_index = (
+        _bundle_spaces(config) if config.lint.genie.rules.agent_description.enabled else {}
     )
     evaluations = []
     for asset, raw in loaded:
         path = asset.source
-        bundle_space = (
-            spaces_by_path[path] if path in spaces_by_path else spaces_by_key.get(asset.identifier)
-        )
+        bundle_space = _find_bundle_space(bundle_index, config, asset)
         if bundle_space is not None:
             raw["description"] = bundle_space.get("description")
         asset_metadata_error = metadata_error

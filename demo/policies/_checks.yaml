@@ -1,0 +1,72 @@
+lamp_policies:
+  - name: no_catalog_or_schema_resources
+    description: The setup notebook creates the catalog and schema with SQL.
+    preset: deny_resource
+    parameters:
+      resource_types: [catalogs, schemas]
+
+  - name: lamp_mutators_enabled
+    description: Keep Lamp replacements applied to dashboards and Genie spaces.
+    preset: require_mutators
+    parameters:
+      mutators:
+        - lamp_ops.bundles:mutate_dashboards
+        - lamp_ops.bundles:mutate_genie_spaces
+
+  - name: bundle_has_manager
+    description: Keep a bundle-level CAN_MANAGE permission.
+    sql: bundle_manager.sql
+
+  - name: bundle_presets_tag_resources
+    description: Let Databricks tag every resource through bundle presets.
+    preset: require_preset_tags
+    parameters:
+      key_values:
+        test_tag: test_value_2
+
+  - name: jobs_have_demo_tag
+    description: Tag setup jobs with the demo bundle preset.
+    preset: require_tags
+    parameters:
+      resource_types: [jobs]
+      key_values:
+        test_tag: test_value_2
+    config:
+      targets: [setup]
+
+  - name: jobs_limit_concurrency
+    description: Keep demo setup jobs to one concurrent run.
+    preset: allowed_field_values
+    parameters:
+      resource_types: [jobs]
+      field: $.max_concurrent_runs
+      values: [1]
+    config:
+      targets: [setup]
+
+  - name: consumers_allow_account_users
+    description: Let account users run the demo dashboard and Genie space.
+    preset: require_permissions
+    parameters:
+      resource_types: [dashboards, genie_spaces]
+      permissions:
+        - group_name: account users
+          level: CAN_RUN
+    config:
+      targets: [dev, prod]
+
+  - name: setup_target_has_no_consumers
+    description: Keep dashboards and Genie spaces in the asset deployment stage.
+    preset: deny_resource
+    parameters:
+      resource_types: [dashboards, genie_spaces]
+    config:
+      targets: [setup]
+
+  - name: asset_targets_have_no_jobs
+    description: Keep setup jobs in the data deployment stage.
+    preset: deny_resource
+    parameters:
+      resource_types: [jobs]
+    config:
+      targets: [dev, prod]

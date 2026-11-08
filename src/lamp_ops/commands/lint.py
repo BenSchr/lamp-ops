@@ -8,34 +8,9 @@ import typer
 from lamp_ops.cli import guarded, state
 from lamp_ops.config import load_config
 from lamp_ops.linting import lint_assets
-from lamp_ops.reporting import render_lint, render_lint_json, write_lint_report
+from lamp_ops.reporting import render_lint, report_json, write_output
 
 OutputFormat = Literal["text", "json"]
-
-
-def run_lint(
-    ctx: typer.Context,
-    assets: list[str] | None,
-    verbose: bool,
-    output_format: OutputFormat,
-    output_path: Path | None,
-    command: str,
-    profile: str | None,
-    offline: bool,
-) -> None:
-    def operation() -> None:
-        config = load_config(state(ctx).config_path)
-        report = lint_assets(config, assets, profile=profile, offline=offline)
-        if output_format == "json":
-            render_lint_json(report, command)
-        else:
-            render_lint(report, verbose=verbose)
-        if output_path:
-            write_lint_report(report, output_path, command)
-        if report.has_errors:
-            raise typer.Exit(1)
-
-    guarded(ctx, operation)
 
 
 def lint(
@@ -64,4 +39,19 @@ def lint(
     ] = False,
 ) -> None:
     """Lint all configured assets."""
-    run_lint(ctx, assets, verbose, output, output_path, "lamp lint", profile, offline)
+    command = f"lamp {ctx.info_name}"
+
+    def operation() -> None:
+        config = load_config(state(ctx).config_path)
+        report = lint_assets(config, assets, profile=profile, offline=offline)
+        payload = report_json(report, command)
+        if output == "json":
+            typer.echo(payload, nl=False)
+        else:
+            render_lint(report, verbose=verbose)
+        if output_path:
+            write_output(output_path, payload)
+        if report.has_errors:
+            raise typer.Exit(1)
+
+    guarded(ctx, operation)

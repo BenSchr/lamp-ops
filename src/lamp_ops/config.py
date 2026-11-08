@@ -8,13 +8,11 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator, model_validator
 
+from lamp_ops.errors import LampError
+
 CONFIG_NAMES = ("lamp_config.yaml", "lamp_config.yml", ".lamp_config.yaml", ".lamp_config.yml")
 AssetMode = Literal["env", "asset"]
 Severity = Literal["warn", "error"]
-
-
-class LampError(ValueError):
-    """A concise, user-facing Lamp error."""
 
 
 class TargetConfig(BaseModel):
@@ -309,17 +307,40 @@ class AssetsConfig(BaseModel):
 class LampConfig(BaseModel):
     """Root model for lamp_config.yaml."""
 
+    # Unknown top-level keys (e.g. 0.0.1's `schema_version`) are ignored so older and newer
+    # configurations still load; nested sections stay strict. The JSON Schema keeps
+    # rejecting them so editors still flag typos.
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         title="Lamp Configuration",
-        json_schema_extra={"$id": "https://schemas.lamp-ops.dev/lamp-config-2.0.json"},
+        json_schema_extra={
+            "$id": "https://schemas.lamp-ops.dev/lamp-config.json",
+            "additionalProperties": False,
+        },
     )
 
-    schema_version: Literal[2] = Field(default=2, description="Configuration schema version.")
     root_path: Path = Field(default=Path("."), description="Root relative to this config file.")
     dab_resource_path: Path | None = Field(
         default=None,
         description="Bundle resource YAML directory, relative to the configuration file.",
+    )
+    policy_path: Path | None = Field(
+        default=None,
+        description=(
+            "Policy checks directory, YAML or SQL file, relative to the configuration file; "
+            "defaults to an existing policies directory beside it. "
+            "Used when neither --policy-path nor LAMP_POLICY_PATH is set."
+        ),
+    )
+    # Validated by `lamp policy` and typed in the JSON Schema; kept untyped here so loading
+    # the configuration (e.g. in bundle mutators) does not build every policy preset model.
+    lamp_policies: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "Policy checks; also the only key of policy YAML files. SQL paths are relative "
+            "to the file declaring them. Used when neither --policy-path nor LAMP_POLICY_PATH "
+            "is set."
+        ),
     )
     settings: SharedSettings = Field(
         default_factory=SharedSettings,
@@ -347,6 +368,16 @@ class LampConfig(BaseModel):
             resolved.relative_to(self.root)
         except ValueError as error:
             raise LampError(f"Configured path escapes root_path: {value}") from error
+        return resolved
+
+    def resolve_config_path(self, value: Path) -> Path:
+        """Resolve a path relative to the config file that must stay inside its directory."""
+        base = self.config_path.parent
+        if value.is_absolute():
+            raise LampError(f"Configured paths must be relative: {value}")
+        resolved = (base / value).resolve()
+        if not resolved.is_relative_to(base):
+            raise LampError(f"Configured path escapes configuration directory: {value}")
         return resolved
 
 

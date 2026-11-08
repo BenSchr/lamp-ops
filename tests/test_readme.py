@@ -1,7 +1,9 @@
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
+import scripts.update_readme as update_readme_module
 from scripts.update_readme import (
     CLI_BEGIN,
     CLI_END,
@@ -49,7 +51,12 @@ old
     assert "Not a heading](" not in rendered
     assert "### `lamp promote dashboards`" in rendered
     assert "### `lamp lint`" in rendered
-    assert "--profile      -p" in rendered
+    assert "| `--profile`, `-p` | `TEXT` |  | Databricks CLI profile" in rendered
+    assert "| `--output`, `-o` | `text` \\| `json` | `text` |" in rendered
+    assert "| `--input` | `PATH` | required |" in rendered
+    assert "lamp promote [OPTIONS] [COMMAND] [ARGS]..." in rendered
+    assert "### `lamp config schema`" in rendered and "### `lamp config`" in rendered
+    assert "<summary>Default configuration</summary>" in rendered
     assert "### `lamp lint genie`" not in rendered
     assert "| 6 | Data source count | `source_count` |" in rendered
     assert "maximum_sources: 12" in rendered
@@ -73,3 +80,21 @@ def test_readme_check_detects_drift_without_writing(tmp_path: Path) -> None:
 def test_readme_rejects_missing_markers() -> None:
     with pytest.raises(ReadmeError, match="Expected exactly one"):
         rendered_readme("# Missing markers\n")
+
+
+def test_policy_table_reference_matches_real_database(monkeypatch: pytest.MonkeyPatch) -> None:
+    reference = update_readme_module.generate_policy_table_reference()
+    assert "| `modified_status` | `VARCHAR` |" in reference
+    assert "### `bundle_resources.<type>`" in reference
+    assert "| `field(document, path)` |" in reference
+
+    relations = list(update_readme_module.RELATIONS)
+    tags = relations[-1]
+    relations[-1] = replace(tags, columns={k: v for k, v in tags.columns.items() if k != "key"})
+    monkeypatch.setattr(update_readme_module, "RELATIONS", tuple(relations))
+    with pytest.raises(ReadmeError, match="Columns of resource_tags"):
+        update_readme_module.generate_policy_table_reference()
+
+    monkeypatch.setattr(update_readme_module, "RELATIONS", tuple(relations[:-1]))
+    with pytest.raises(ReadmeError, match="Documented relations"):
+        update_readme_module.generate_policy_table_reference()

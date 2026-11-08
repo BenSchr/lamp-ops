@@ -1,6 +1,6 @@
-schema_version: 2
 root_path: .
 dab_resource_path: resources
+policy_path: policies
 
 settings:
   mode: env
@@ -8,10 +8,10 @@ settings:
   targets:
     - name: test
       replacements:
-        my_catalog_dev: my_catalog_test
+        lamp_ops_dev: lamp_ops_test
     - name: prod
       replacements:
-        my_catalog_dev: my_catalog_prod
+        lamp_ops_dev: lamp_ops_prod
 
 assets:
   dashboards:

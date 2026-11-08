@@ -7,7 +7,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-from lamp_ops.config import AssetConfig, AssetGroup, AssetMode, LampConfig, LampError
+from lamp_ops.config import (
+    AssetConfig,
+    AssetGroup,
+    AssetMode,
+    AssetTargetConfig,
+    LampConfig,
+    TargetConfig,
+)
+from lamp_ops.errors import LampError
+from lamp_ops.replacements import replace_strings
 
 AssetKind = Literal["dashboards", "genie"]
 Action = Literal["create", "update", "skip"]
@@ -111,12 +120,7 @@ def _excluded(config: LampConfig, group: AssetGroup, discovered: DiscoveredAsset
     )
 
 
-def discover_assets(
-    config: LampConfig,
-    kind: AssetKind,
-    selected: list[str] | None = None,
-) -> tuple[DiscoveredAsset, ...]:
-    """Resolve configured asset names or source paths."""
+def _configured_assets(config: LampConfig, kind: AssetKind) -> dict[str, DiscoveredAsset]:
     group = _asset_group(config, kind)
     configured = _auto_discover(config, kind, group)
     configured.update(
@@ -130,9 +134,20 @@ def discover_assets(
             for identifier, asset in group.items.items()
         }
     )
-    by_path = {item.source: item for item in configured.values()}
-    if len(by_path) != len(configured):
+    if len({item.source for item in configured.values()}) != len(configured):
         raise LampError(f"Duplicate configured {kind} source path")
+    return configured
+
+
+def discover_assets(
+    config: LampConfig,
+    kind: AssetKind,
+    selected: list[str] | None = None,
+) -> tuple[DiscoveredAsset, ...]:
+    """Resolve configured asset names or source paths."""
+    group = _asset_group(config, kind)
+    configured = _configured_assets(config, kind)
+    by_path = {item.source: item for item in configured.values()}
 
     if selected:
         requested = []
@@ -171,6 +186,15 @@ def _targets(config: LampConfig, discovered: DiscoveredAsset):
     return tuple((shared.get(target.name), target) for target in overrides)
 
 
+def _merged_replacements(
+    shared: TargetConfig | None, override: AssetTargetConfig | None
+) -> dict[str, str]:
+    replacements = dict(shared.replacements) if shared else {}
+    if override:
+        replacements.update(override.replacements)
+    return replacements
+
+
 def plan_promotion(
     config: LampConfig,
     kinds: tuple[AssetKind, ...],
@@ -192,9 +216,7 @@ def plan_promotion(
                     if override and override.path
                     else _asset_path(base, kind, discovered.identifier, target_name, mode)
                 )
-                replacements = dict(shared.replacements) if shared else {}
-                if override:
-                    replacements.update(override.replacements)
+                replacements = _merged_replacements(shared, override)
                 if target == discovered.source:
                     raise LampError(f"Target cannot overwrite its source: {target}")
                 if target in seen_targets:
@@ -224,16 +246,22 @@ def plan_promotion(
     return PromotionPlan(tuple(tasks))
 
 
-def _replace_strings(value: Any, replacements: tuple[tuple[str, str], ...]) -> Any:
-    if isinstance(value, str):
-        for old, new in sorted(replacements, key=lambda item: len(item[0]), reverse=True):
-            value = value.replace(old, new)
-        return value
-    if isinstance(value, list):
-        return [_replace_strings(item, replacements) for item in value]
-    if isinstance(value, dict):
-        return {key: _replace_strings(item, replacements) for key, item in value.items()}
-    return value
+def sort_genie_sources(definition: dict[str, Any]) -> None:
+    """Order Genie table and volume sources by their API-required fields."""
+    sources = definition.get("data_sources")
+    if sources is None:
+        return
+    if not isinstance(sources, dict):
+        raise LampError("Genie data_sources must be an object")
+    for collection, key in (("tables", "identifier"), ("volumes", "path")):
+        if collection not in sources:
+            continue
+        entries = sources[collection]
+        if not isinstance(entries, list) or any(
+            not isinstance(entry, dict) or not isinstance(entry.get(key), str) for entry in entries
+        ):
+            raise LampError(f"Genie data_sources.{collection} must be a list of objects with {key}")
+        entries.sort(key=lambda entry: entry[key])
 
 
 def execute_plan(plan: PromotionPlan, *, dry_run: bool = False) -> PromotionPlan:
@@ -246,7 +274,11 @@ def execute_plan(plan: PromotionPlan, *, dry_run: bool = False) -> PromotionPlan
             source_data = json.loads(task.source.read_text(encoding="utf-8"))
         except json.JSONDecodeError as error:
             raise LampError(f"Invalid JSON in {task.source}: {error}") from error
-        rendered = _replace_strings(source_data, task.substitutions)
+        rendered = replace_strings(source_data, task.substitutions)
+        if task.kind == "genie":
+            if not isinstance(rendered, dict):
+                raise LampError(f"Expected a JSON object in {task.source}")
+            sort_genie_sources(rendered)
         task.target.parent.mkdir(parents=True, exist_ok=True)
         task.target.write_text(
             json.dumps(rendered, indent=2, ensure_ascii=False, sort_keys=True) + "\n",

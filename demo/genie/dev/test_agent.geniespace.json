@@ -1,106 +1,53 @@
 {
   "version": 2,
+  "config": {
+    "sample_questions": [
+      {
+        "id": "10000000000000000000000000000001",
+        "question": ["How has revenue changed over the last 90 days?"]
+      },
+      {
+        "id": "10000000000000000000000000000002",
+        "question": ["Which region generates the most revenue?"]
+      },
+      {
+        "id": "10000000000000000000000000000003",
+        "question": ["Which products sell best by revenue?"]
+      }
+    ]
+  },
   "data_sources": {
     "tables": [
       {
-        "identifier": "my_catalog_dev.default.example_hosts",
+        "identifier": "lamp_ops_dev.base.sales_metrics",
         "column_configs": [
+          {"column_name": "average_order_value"},
+          {"column_name": "order_count"},
+          {"column_name": "order_date", "enable_format_assistance": true},
           {
-            "column_name": "host_city",
+            "column_name": "product",
             "enable_format_assistance": true,
             "enable_entity_matching": true
           },
           {
-            "column_name": "host_id",
-            "enable_format_assistance": true
-          },
-          {
-            "column_name": "host_name",
+            "column_name": "region",
             "enable_format_assistance": true,
             "enable_entity_matching": true
           },
-          {
-            "column_name": "host_since",
-            "enable_format_assistance": true
-          }
-        ]
-      },
-      {
-        "identifier": "my_catalog_dev.default.example_listings",
-        "column_configs": [
-          {
-            "column_name": "availability_365",
-            "enable_format_assistance": true
-          },
-          {
-            "column_name": "host_id",
-            "enable_format_assistance": true
-          },
-          {
-            "column_name": "listing_id",
-            "enable_format_assistance": true
-          },
-          {
-            "column_name": "listing_name",
-            "enable_format_assistance": true,
-            "enable_entity_matching": true
-          },
-          {
-            "column_name": "price",
-            "enable_format_assistance": true
-          },
-          {
-            "column_name": "room_type",
-            "enable_format_assistance": true,
-            "enable_entity_matching": true
-          }
-        ]
-      },
-      {
-        "identifier": "my_catalog_dev.default.example_listings_metrics",
-        "column_configs": [
-          {
-            "column_name": "avg_price"
-          },
-          {
-            "column_name": "host_city",
-            "enable_format_assistance": true,
-            "enable_entity_matching": true
-          },
-          {
-            "column_name": "listing_count"
-          },
-          {
-            "column_name": "listing_month",
-            "enable_format_assistance": true
-          },
-          {
-            "column_name": "room_type",
-            "enable_format_assistance": true,
-            "enable_entity_matching": true
-          },
-          {
-            "column_name": "total_availability"
-          }
+          {"column_name": "total_revenue"}
         ]
       }
     ]
   },
   "instructions": {
-    "join_specs": [
+    "text_instructions": [
       {
-        "id": "12345",
-        "left": {
-          "identifier": "my_catalog_dev.default.example_listings",
-          "alias": "example_listings"
-        },
-        "right": {
-          "identifier": "my_catalog_dev.default.example_hosts",
-          "alias": "example_hosts"
-        },
-        "sql": [
-          "`example_listings`.`host_id` = `example_hosts`.`host_id`",
-          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        "id": "30000000000000000000000000000001",
+        "content": [
+          "This is synthetic demo data, not real business performance. All revenue and average order values are in USD.",
+          "Use sales_metrics as the only fact source. Its measures must be queried with MEASURE(), not SUM() or AVG(). Group by the requested dimensions.",
+          "Revenue is total_revenue, order count is order_count, and average order value is average_order_value. Dates use the calendar day.",
+          "The data covers the last 90 days. A synthetic Europe discount around days 55-65 of the generated period creates a revenue dip."
         ]
       }
     ]

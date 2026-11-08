@@ -9,7 +9,8 @@ import pytest
 import yaml
 from databricks.sdk import WorkspaceClient
 
-from lamp_ops.config import LampError, SourceCountRuleConfig, load_config
+from lamp_ops.config import SourceCountRuleConfig, load_config
+from lamp_ops.errors import LampError
 from lamp_ops.linting.genie.rules import source_count
 from lamp_ops.linting.genie.scanner import lint_genie
 
@@ -51,7 +52,6 @@ def test_threshold_counts_failing_agents_before_error(tmp_path: Path) -> None:
     config_path.write_text(
         yaml.safe_dump(
             {
-                "schema_version": 2,
                 "dab_resource_path": "resources/genie_agents",
                 "assets": {"genie": {"path": "genie"}},
                 "lint": {
@@ -209,7 +209,6 @@ def shared_source_config(tmp_path: Path) -> Path:
     config_path.write_text(
         yaml.safe_dump(
             {
-                "schema_version": 2,
                 "assets": {"genie": {"path": "genie"}},
                 "lint": {"genie": {}},
             }

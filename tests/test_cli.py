@@ -5,6 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -17,8 +18,11 @@ def invoke(bundle: Path, *args: str):
     return runner.invoke(app, ["--config", str(bundle / "lamp_config.yaml"), *args])
 
 
-def test_cli_import_does_not_load_databricks_sdk() -> None:
-    code = "import sys, lamp_ops.cli; print('databricks.sdk' in sys.modules)"
+def test_cli_import_does_not_load_databricks_sdk_or_bundles() -> None:
+    code = (
+        "import sys, lamp_ops.cli; "
+        "print('databricks.sdk' in sys.modules or 'databricks.bundles' in sys.modules)"
+    )
     result = subprocess.run(
         [sys.executable, "-c", code], capture_output=True, text=True, check=True
     )
@@ -106,6 +110,87 @@ def test_promote_dry_run_stale_and_force(bundle: Path) -> None:
     assert "2 updated" in forced.output
 
 
+@pytest.mark.parametrize("command", [("promote",), ("promote", "genie")])
+@pytest.mark.parametrize("with_replacements", [False, True])
+def test_genie_promotion_sorts_sources_after_replacement(
+    bundle: Path, command: tuple[str, ...], with_replacements: bool
+) -> None:
+    config_path = bundle / "lamp_config.yaml"
+    config = yaml.safe_load(config_path.read_text())
+    replacements = {
+        "dev.s.a": "prod.s.z",
+        "dev.s.b": "prod.s.a",
+        "/Volumes/dev/s/a": "/Volumes/prod/s/z",
+        "/Volumes/dev/s/b": "/Volumes/prod/s/a",
+    }
+    for target in config["settings"]["targets"]:
+        target["replacements"] = replacements if with_replacements else {}
+    config_path.write_text(yaml.safe_dump(config))
+    data = {
+        "data_sources": {
+            "tables": [{"identifier": "dev.s.a"}, {"identifier": "dev.s.b"}],
+            "volumes": [{"path": "/Volumes/dev/s/a"}, {"path": "/Volumes/dev/s/b"}],
+            "future_source": ["z", "a"],
+        },
+        "instructions": {"text_instructions": ["z", "a"]},
+    }
+    if not with_replacements:
+        data["data_sources"]["tables"].reverse()
+        data["data_sources"]["volumes"].reverse()
+    source = bundle / "src/genie/dev/sales.geniespace.json"
+    source.write_text(json.dumps(data))
+    before = source.read_bytes()
+    dry_run = invoke(bundle, *command, "--dry-run")
+    assert dry_run.exit_code == 0, dry_run.output
+    assert not (bundle / "src/genie/test").exists()
+
+    promoted = invoke(bundle, *command)
+    assert promoted.exit_code == 0, promoted.output
+    catalog = "prod" if with_replacements else "dev"
+    names = ["a", "z"] if with_replacements else ["a", "b"]
+    for target in ("test", "prod"):
+        output = json.loads((bundle / f"src/genie/{target}/sales.geniespace.json").read_text())
+        assert output == {
+            "data_sources": {
+                "tables": [{"identifier": f"{catalog}.s.{name}"} for name in names],
+                "volumes": [{"path": f"/Volumes/{catalog}/s/{name}"} for name in names],
+                "future_source": ["z", "a"],
+            },
+            "instructions": {"text_instructions": ["z", "a"]},
+        }
+    assert source.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    ("data", "message"),
+    [
+        ([], "Expected a JSON object"),
+        ({"data_sources": []}, "Genie data_sources must be an object"),
+        ({"data_sources": {"tables": [{}]}}, "objects with identifier"),
+        ({"data_sources": {"volumes": [{"path": 1}]}}, "objects with path"),
+    ],
+)
+def test_genie_promotion_rejects_invalid_source_ordering_fields(
+    bundle: Path, data: object, message: str
+) -> None:
+    source = bundle / "src/genie/dev/sales.geniespace.json"
+    source.write_text(json.dumps(data))
+    result = invoke(bundle, "promote", "genie")
+    assert result.exit_code == 1
+    assert message in result.output
+    assert not (bundle / "src/genie/test").exists()
+
+
+def test_dashboard_promotion_preserves_source_array_order(bundle: Path) -> None:
+    data = {"data_sources": {"tables": [{"identifier": "z"}, {"identifier": "a"}]}}
+    source = bundle / "src/dashboards/dev/sales.lvdash.json"
+    source.write_text(json.dumps(data))
+    result = invoke(bundle, "promote", "dashboards")
+    assert result.exit_code == 0, result.output
+    output = bundle / "src/dashboards/test/sales.lvdash.json"
+    assert json.loads(output.read_text()) == data
+
+
 def test_lint_shows_warnings_without_verbose_and_has_only_ten_rules(bundle: Path) -> None:
     result = invoke(bundle, "lint", "--offline")
     assert result.exit_code == 0
@@ -126,6 +211,7 @@ def test_lint_displays_source_target_and_file_above_table(bundle: Path) -> None:
         )
         assert "genie/test/sales.geniespace.json" not in result.output
         payload = json.loads(invoke(bundle, command, "--offline", "--output", "json").output)
+        assert payload["command"] == f"lamp {command}"
         assert payload["summary"]["assets"] == 1
         assert payload["assets"][0]["source_target"] == "dev"
 
@@ -174,6 +260,29 @@ def test_error_severity_is_blocking(bundle: Path) -> None:
     result = invoke(bundle, "lint", "--offline")
     assert result.exit_code == 1
     assert "ERROR" in result.output
+
+
+def test_lint_finds_target_scoped_bundle_genie_space(bundle: Path) -> None:
+    config = bundle / "lamp_config.yaml"
+    values = yaml.safe_load(config.read_text(encoding="utf-8"))
+    values["dab_resource_path"] = "resources"
+    values["lint"]["genie"] = {
+        "rules": {"agent_description": {"enabled": True, "severity": "error", "threshold": 0}},
+    }
+    config.write_text(yaml.safe_dump(values), encoding="utf-8")
+    resources = bundle / "resources"
+    resources.mkdir()
+    (resources / "sales.yml").write_text(
+        "resources:\n  genie_spaces:\n    sales:\n      description: Top-level sales agent\n"
+        "targets:\n"
+        "  dev:\n    resources:\n      genie_spaces:\n        sales:\n          description: ''\n"
+        "  prod:\n    resources:\n      genie_spaces:\n"
+        "        sales:\n          description: Prod sales agent\n",
+        encoding="utf-8",
+    )
+    result = invoke(bundle, "lint", "--offline")
+    assert result.exit_code == 1
+    assert "not found in dab_resource_path" not in result.output
 
 
 def test_warning_is_non_blocking(bundle: Path) -> None:
@@ -235,14 +344,21 @@ def test_short_profile_option_is_forwarded(bundle: Path, monkeypatch) -> None:
     assert profiles == ["development", "development"]
 
 
-def test_schema_stdout_and_overwrite_protection(bundle: Path) -> None:
+def test_schema_stdout_and_output_path(bundle: Path) -> None:
     stdout = invoke(bundle, "config", "schema")
     assert stdout.exit_code == 0
-    assert json.loads(stdout.output)["title"] == "Lamp Configuration"
+    schema = json.loads(stdout.output)
+    assert schema["title"] == "Lamp Configuration"
+    check_refs = schema["properties"]["lamp_policies"]["items"]["oneOf"]
+    presets = {
+        schema["$defs"][ref["$ref"].rsplit("/", 1)[1]]["properties"].get("preset", {}).get("const")
+        for ref in check_refs
+    }
+    assert {"deny_resource", "require_mutators", "require_preset_tags", None} <= presets
     output = bundle / "schema/lamp.json"
     first = invoke(bundle, "config", "schema", "--output-path", str(output))
     second = invoke(bundle, "config", "schema", "--output-path", str(output))
-    forced = invoke(bundle, "config", "schema", "--output-path", str(output), "--force")
-    assert first.exit_code == forced.exit_code == 0
-    assert second.exit_code == 1
-    assert "Refusing to overwrite" in second.output
+    directory = invoke(bundle, "config", "schema", "--output-path", str(output.parent))
+    assert first.exit_code == second.exit_code == 0
+    assert json.loads(output.read_text(encoding="utf-8")) == schema
+    assert directory.exit_code == 1 and "is a directory" in directory.output

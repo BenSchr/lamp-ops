@@ -1,0 +1,1518 @@
+{
+  "$defs": {
+    "AgentDescriptionRuleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the rule is evaluated.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "minimum_characters": {
+          "default": 30,
+          "minimum": 1,
+          "title": "Minimum Characters",
+          "type": "integer"
+        },
+        "minimum_words": {
+          "default": 5,
+          "minimum": 1,
+          "title": "Minimum Words",
+          "type": "integer"
+        },
+        "recommended_characters": {
+          "default": 100,
+          "minimum": 1,
+          "title": "Recommended Characters",
+          "type": "integer"
+        },
+        "severity": {
+          "default": "warn",
+          "description": "Outcome used when failures exceed threshold.",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0,
+          "description": "Number of Genie agents allowed to fail before error severity escalates.",
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "integer"
+        }
+      },
+      "title": "AgentDescriptionRuleConfig",
+      "type": "object"
+    },
+    "AllowedFieldValues": {
+      "additionalProperties": false,
+      "description": "Require a scalar field to exist and equal one of the allowed JSON values.",
+      "properties": {
+        "field": {
+          "description": "Scalar JSON path or pointer, e.g. `$.max_concurrent_runs`.",
+          "minLength": 1,
+          "title": "Field",
+          "type": "string"
+        },
+        "resource_types": {
+          "description": "Bundle resource types such as `jobs` or `schemas`; `*` selects all types.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Resource Types",
+          "type": "array"
+        },
+        "values": {
+          "description": "Allowed JSON scalar values; types must match.",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "resource_types",
+        "field",
+        "values"
+      ],
+      "title": "AllowedFieldValues",
+      "type": "object"
+    },
+    "AllowedFieldValuesCheck": {
+      "additionalProperties": false,
+      "description": "Require a scalar field to exist and equal one of the allowed JSON values.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/CheckConfig"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Unique check name; defaults the SQL filename.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/$defs/AllowedFieldValues"
+        },
+        "preset": {
+          "const": "allowed_field_values",
+          "title": "Preset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "preset",
+        "parameters"
+      ],
+      "title": "AllowedFieldValuesCheck",
+      "type": "object"
+    },
+    "AssetConfig": {
+      "additionalProperties": false,
+      "description": "Overrides for one explicitly named asset.",
+      "properties": {
+        "exclude": {
+          "default": false,
+          "description": "Exclude this asset from promotion.",
+          "title": "Exclude",
+          "type": "boolean"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "env",
+                "asset"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Override the shared path layout for this asset.",
+          "title": "Mode"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Explicit source file path relative to root_path; derived when omitted.",
+          "title": "Source"
+        },
+        "source_target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Override the shared source environment for this asset.",
+          "title": "Source Target"
+        },
+        "targets": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/AssetTargetConfig"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selected targets and overrides; all shared targets are used when omitted.",
+          "title": "Targets"
+        }
+      },
+      "title": "AssetConfig",
+      "type": "object"
+    },
+    "AssetGroup": {
+      "additionalProperties": false,
+      "description": "Discovery path, exclusions, and optional overrides for one asset kind.",
+      "properties": {
+        "exclusions": {
+          "description": "Asset names or root-relative source paths excluded from promotion.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclusions",
+          "type": "array"
+        },
+        "items": {
+          "additionalProperties": {
+            "$ref": "#/$defs/AssetConfig"
+          },
+          "description": "Optional per-asset overrides keyed by stable name.",
+          "title": "Items",
+          "type": "object"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Base directory for source discovery and derived targets; defaults to the kind.",
+          "title": "Path"
+        }
+      },
+      "title": "AssetGroup",
+      "type": "object"
+    },
+    "AssetTargetConfig": {
+      "additionalProperties": false,
+      "description": "Optional target selection and overrides for one named asset.",
+      "properties": {
+        "name": {
+          "description": "Target environment name.",
+          "title": "Name",
+          "type": "string"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Explicit target file path relative to root_path; derived when omitted.",
+          "title": "Path"
+        },
+        "replacements": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Replacements merged over the shared target replacements.",
+          "title": "Replacements",
+          "type": "object"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "AssetTargetConfig",
+      "type": "object"
+    },
+    "AssetsConfig": {
+      "additionalProperties": false,
+      "description": "Supported asset-type settings.",
+      "properties": {
+        "dashboards": {
+          "$ref": "#/$defs/AssetGroup"
+        },
+        "genie": {
+          "$ref": "#/$defs/AssetGroup"
+        }
+      },
+      "title": "AssetsConfig",
+      "type": "object"
+    },
+    "BenchmarksRuleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the rule is evaluated.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "minimum_questions": {
+          "default": 10,
+          "minimum": 1,
+          "title": "Minimum Questions",
+          "type": "integer"
+        },
+        "recommended_questions": {
+          "default": 20,
+          "minimum": 1,
+          "title": "Recommended Questions",
+          "type": "integer"
+        },
+        "severity": {
+          "default": "warn",
+          "description": "Outcome used when failures exceed threshold.",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0,
+          "description": "Number of Genie agents allowed to fail before error severity escalates.",
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "integer"
+        }
+      },
+      "title": "BenchmarksRuleConfig",
+      "type": "object"
+    },
+    "CheckConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "severity": {
+          "default": "error",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "targets": {
+          "description": "Bundle targets to check; empty means all.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Targets",
+          "type": "array"
+        }
+      },
+      "title": "CheckConfig",
+      "type": "object"
+    },
+    "ColumnDescriptionsRuleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the rule is evaluated.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "minimum_coverage": {
+          "default": 0.5,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Minimum Coverage",
+          "type": "number"
+        },
+        "recommended_coverage": {
+          "default": 0.8,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Recommended Coverage",
+          "type": "number"
+        },
+        "severity": {
+          "default": "warn",
+          "description": "Outcome used when failures exceed threshold.",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0,
+          "description": "Number of Genie agents allowed to fail before error severity escalates.",
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "integer"
+        }
+      },
+      "title": "ColumnDescriptionsRuleConfig",
+      "type": "object"
+    },
+    "DenyResource": {
+      "additionalProperties": false,
+      "description": "Report every resource of a prohibited type.",
+      "properties": {
+        "resource_types": {
+          "description": "Bundle resource types such as `jobs` or `schemas`; `*` selects all types.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Resource Types",
+          "type": "array"
+        }
+      },
+      "required": [
+        "resource_types"
+      ],
+      "title": "DenyResource",
+      "type": "object"
+    },
+    "DenyResourceCheck": {
+      "additionalProperties": false,
+      "description": "Report every resource of a prohibited type.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/CheckConfig"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Unique check name; defaults the SQL filename.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/$defs/DenyResource"
+        },
+        "preset": {
+          "const": "deny_resource",
+          "title": "Preset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "preset",
+        "parameters"
+      ],
+      "title": "DenyResourceCheck",
+      "type": "object"
+    },
+    "EntityFormatMatchingRuleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the rule is evaluated.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "entity_maximum_columns": {
+          "default": 120,
+          "minimum": 1,
+          "title": "Entity Maximum Columns",
+          "type": "integer"
+        },
+        "entity_warning_columns": {
+          "default": 100,
+          "minimum": 1,
+          "title": "Entity Warning Columns",
+          "type": "integer"
+        },
+        "minimum_enabled_columns": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Minimum Enabled Columns",
+          "type": "integer"
+        },
+        "severity": {
+          "default": "warn",
+          "description": "Outcome used when failures exceed threshold.",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0,
+          "description": "Number of Genie agents allowed to fail before error severity escalates.",
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "integer"
+        }
+      },
+      "title": "EntityFormatMatchingRuleConfig",
+      "type": "object"
+    },
+    "ForbidFields": {
+      "additionalProperties": false,
+      "description": "Forbid each field on every selected resource, even when its value is null.",
+      "properties": {
+        "fields": {
+          "description": "Scalar JSON paths (`$.run_as.user_name`) or pointers; no wildcards.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Fields",
+          "type": "array"
+        },
+        "resource_types": {
+          "description": "Bundle resource types such as `jobs` or `schemas`; `*` selects all types.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Resource Types",
+          "type": "array"
+        }
+      },
+      "required": [
+        "resource_types",
+        "fields"
+      ],
+      "title": "ForbidFields",
+      "type": "object"
+    },
+    "ForbidFieldsCheck": {
+      "additionalProperties": false,
+      "description": "Forbid each field on every selected resource, even when its value is null.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/CheckConfig"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Unique check name; defaults the SQL filename.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/$defs/ForbidFields"
+        },
+        "preset": {
+          "const": "forbid_fields",
+          "title": "Preset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "preset",
+        "parameters"
+      ],
+      "title": "ForbidFieldsCheck",
+      "type": "object"
+    },
+    "GenieLintConfig": {
+      "additionalProperties": false,
+      "description": "Static Genie lint configuration.",
+      "properties": {
+        "exclusions": {
+          "description": "Genie names or config-root-relative paths excluded from linting.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclusions",
+          "type": "array"
+        },
+        "rules": {
+          "$ref": "#/$defs/GenieRulesConfig"
+        }
+      },
+      "title": "GenieLintConfig",
+      "type": "object"
+    },
+    "GenieRulesConfig": {
+      "additionalProperties": false,
+      "description": "Explicit settings for the ten static Genie checks.",
+      "properties": {
+        "agent_description": {
+          "$ref": "#/$defs/AgentDescriptionRuleConfig"
+        },
+        "benchmarks": {
+          "$ref": "#/$defs/BenchmarksRuleConfig"
+        },
+        "column_descriptions": {
+          "$ref": "#/$defs/ColumnDescriptionsRuleConfig"
+        },
+        "entity_format_matching": {
+          "$ref": "#/$defs/EntityFormatMatchingRuleConfig"
+        },
+        "instructions": {
+          "$ref": "#/$defs/InstructionsRuleConfig"
+        },
+        "joins": {
+          "$ref": "#/$defs/RuleConfig"
+        },
+        "noisy_columns": {
+          "$ref": "#/$defs/NoisyColumnsRuleConfig"
+        },
+        "source_count": {
+          "$ref": "#/$defs/SourceCountRuleConfig"
+        },
+        "sql_guidance": {
+          "$ref": "#/$defs/SqlGuidanceRuleConfig"
+        },
+        "table_descriptions": {
+          "$ref": "#/$defs/TableDescriptionsRuleConfig"
+        }
+      },
+      "title": "GenieRulesConfig",
+      "type": "object"
+    },
+    "InstructionsRuleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the rule is evaluated.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "maximum_characters": {
+          "default": 2000,
+          "minimum": 1,
+          "title": "Maximum Characters",
+          "type": "integer"
+        },
+        "minimum_characters": {
+          "default": 51,
+          "minimum": 1,
+          "title": "Minimum Characters",
+          "type": "integer"
+        },
+        "severity": {
+          "default": "warn",
+          "description": "Outcome used when failures exceed threshold.",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0,
+          "description": "Number of Genie agents allowed to fail before error severity escalates.",
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "integer"
+        }
+      },
+      "title": "InstructionsRuleConfig",
+      "type": "object"
+    },
+    "LintConfig": {
+      "additionalProperties": false,
+      "description": "Asset lint settings.",
+      "properties": {
+        "genie": {
+          "$ref": "#/$defs/GenieLintConfig"
+        }
+      },
+      "title": "LintConfig",
+      "type": "object"
+    },
+    "NoisyColumnsRuleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the rule is evaluated.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "maximum_ratio": {
+          "default": 0.3,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Maximum Ratio",
+          "type": "number"
+        },
+        "maximum_visible_per_table": {
+          "default": 75,
+          "minimum": 1,
+          "title": "Maximum Visible Per Table",
+          "type": "integer"
+        },
+        "minimum_visible_columns": {
+          "default": 20,
+          "minimum": 1,
+          "title": "Minimum Visible Columns",
+          "type": "integer"
+        },
+        "severity": {
+          "default": "warn",
+          "description": "Outcome used when failures exceed threshold.",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0,
+          "description": "Number of Genie agents allowed to fail before error severity escalates.",
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "integer"
+        },
+        "warning_ratio": {
+          "default": 0.15,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Warning Ratio",
+          "type": "number"
+        }
+      },
+      "title": "NoisyColumnsRuleConfig",
+      "type": "object"
+    },
+    "Permission": {
+      "additionalProperties": false,
+      "description": "One permission entry; set exactly one principal.",
+      "properties": {
+        "group_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Group principal.",
+          "title": "Group Name"
+        },
+        "level": {
+          "description": "Exact permission level, e.g. `CAN_MANAGE`.",
+          "minLength": 1,
+          "title": "Level",
+          "type": "string"
+        },
+        "service_principal_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Service principal application ID.",
+          "title": "Service Principal Name"
+        },
+        "user_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "User principal.",
+          "title": "User Name"
+        }
+      },
+      "required": [
+        "level"
+      ],
+      "title": "Permission",
+      "type": "object"
+    },
+    "RequireBundlePermissions": {
+      "additionalProperties": false,
+      "description": "Require every listed permission in the bundle-level `permissions` list.",
+      "properties": {
+        "permissions": {
+          "description": "Required entries; matching is exact, without a permission-level hierarchy.",
+          "items": {
+            "$ref": "#/$defs/Permission"
+          },
+          "minItems": 1,
+          "title": "Permissions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "permissions"
+      ],
+      "title": "RequireBundlePermissions",
+      "type": "object"
+    },
+    "RequireBundlePermissionsCheck": {
+      "additionalProperties": false,
+      "description": "Require every listed permission in the bundle-level `permissions` list.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/CheckConfig"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Unique check name; defaults the SQL filename.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/$defs/RequireBundlePermissions"
+        },
+        "preset": {
+          "const": "require_bundle_permissions",
+          "title": "Preset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "preset",
+        "parameters"
+      ],
+      "title": "RequireBundlePermissionsCheck",
+      "type": "object"
+    },
+    "RequireFields": {
+      "additionalProperties": false,
+      "description": "Require each field to resolve to a non-null value on every selected resource.",
+      "properties": {
+        "fields": {
+          "description": "Scalar JSON paths (`$.run_as.user_name`) or pointers; no wildcards.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Fields",
+          "type": "array"
+        },
+        "resource_types": {
+          "description": "Bundle resource types such as `jobs` or `schemas`; `*` selects all types.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Resource Types",
+          "type": "array"
+        }
+      },
+      "required": [
+        "resource_types",
+        "fields"
+      ],
+      "title": "RequireFields",
+      "type": "object"
+    },
+    "RequireFieldsCheck": {
+      "additionalProperties": false,
+      "description": "Require each field to resolve to a non-null value on every selected resource.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/CheckConfig"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Unique check name; defaults the SQL filename.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/$defs/RequireFields"
+        },
+        "preset": {
+          "const": "require_fields",
+          "title": "Preset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "preset",
+        "parameters"
+      ],
+      "title": "RequireFieldsCheck",
+      "type": "object"
+    },
+    "RequireMutators": {
+      "additionalProperties": false,
+      "description": "Require bundle Python mutators, e.g. platform mutators that apply governance defaults.\n\nChecks `python.mutators` and the legacy `experimental.python.mutators`.",
+      "properties": {
+        "mutators": {
+          "description": "Exact `module:function` entries, e.g. `lamp_ops.bundles:mutate_dashboards`.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Mutators",
+          "type": "array"
+        }
+      },
+      "required": [
+        "mutators"
+      ],
+      "title": "RequireMutators",
+      "type": "object"
+    },
+    "RequireMutatorsCheck": {
+      "additionalProperties": false,
+      "description": "Require bundle Python mutators, e.g. platform mutators that apply governance defaults.\n\nChecks `python.mutators` and the legacy `experimental.python.mutators`.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/CheckConfig"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Unique check name; defaults the SQL filename.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/$defs/RequireMutators"
+        },
+        "preset": {
+          "const": "require_mutators",
+          "title": "Preset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "preset",
+        "parameters"
+      ],
+      "title": "RequireMutatorsCheck",
+      "type": "object"
+    },
+    "RequirePermissions": {
+      "additionalProperties": false,
+      "description": "Require every listed permission on every selected resource.",
+      "properties": {
+        "permissions": {
+          "description": "Required entries; matching is exact, without a permission-level hierarchy.",
+          "items": {
+            "$ref": "#/$defs/Permission"
+          },
+          "minItems": 1,
+          "title": "Permissions",
+          "type": "array"
+        },
+        "resource_types": {
+          "description": "Bundle resource types such as `jobs` or `schemas`; `*` selects all types.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Resource Types",
+          "type": "array"
+        }
+      },
+      "required": [
+        "resource_types",
+        "permissions"
+      ],
+      "title": "RequirePermissions",
+      "type": "object"
+    },
+    "RequirePermissionsCheck": {
+      "additionalProperties": false,
+      "description": "Require every listed permission on every selected resource.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/CheckConfig"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Unique check name; defaults the SQL filename.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/$defs/RequirePermissions"
+        },
+        "preset": {
+          "const": "require_permissions",
+          "title": "Preset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "preset",
+        "parameters"
+      ],
+      "title": "RequirePermissionsCheck",
+      "type": "object"
+    },
+    "RequirePresetTags": {
+      "additionalProperties": false,
+      "description": "Require tags in the bundle-level `presets.tags` that Databricks applies to resources.\n\nSet `keys`, `key_values`, or both.",
+      "properties": {
+        "key_values": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Tag keys whose value must equal the given string.",
+          "title": "Key Values",
+          "type": "object"
+        },
+        "keys": {
+          "description": "Tag keys that must exist with a non-blank value.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Keys",
+          "type": "array"
+        }
+      },
+      "title": "RequirePresetTags",
+      "type": "object"
+    },
+    "RequirePresetTagsCheck": {
+      "additionalProperties": false,
+      "description": "Require tags in the bundle-level `presets.tags` that Databricks applies to resources.\n\nSet `keys`, `key_values`, or both.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/CheckConfig"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Unique check name; defaults the SQL filename.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/$defs/RequirePresetTags"
+        },
+        "preset": {
+          "const": "require_preset_tags",
+          "title": "Preset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "preset",
+        "parameters"
+      ],
+      "title": "RequirePresetTagsCheck",
+      "type": "object"
+    },
+    "RequireTags": {
+      "additionalProperties": false,
+      "description": "Require tags on every selected resource as rendered after bundle presets.\n\nSet `keys`, `key_values`, or both.",
+      "properties": {
+        "key_values": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Tag keys whose value must equal the given string.",
+          "title": "Key Values",
+          "type": "object"
+        },
+        "keys": {
+          "description": "Tag keys that must exist with a non-blank value.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Keys",
+          "type": "array"
+        },
+        "resource_types": {
+          "description": "Bundle resource types such as `jobs` or `schemas`; `*` selects all types.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Resource Types",
+          "type": "array"
+        }
+      },
+      "required": [
+        "resource_types"
+      ],
+      "title": "RequireTags",
+      "type": "object"
+    },
+    "RequireTagsCheck": {
+      "additionalProperties": false,
+      "description": "Require tags on every selected resource as rendered after bundle presets.\n\nSet `keys`, `key_values`, or both.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/CheckConfig"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Unique check name; defaults the SQL filename.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/$defs/RequireTags"
+        },
+        "preset": {
+          "const": "require_tags",
+          "title": "Preset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "preset",
+        "parameters"
+      ],
+      "title": "RequireTagsCheck",
+      "type": "object"
+    },
+    "RuleConfig": {
+      "additionalProperties": false,
+      "description": "Settings shared by every Genie lint rule.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the rule is evaluated.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "severity": {
+          "default": "warn",
+          "description": "Outcome used when failures exceed threshold.",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0,
+          "description": "Number of Genie agents allowed to fail before error severity escalates.",
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "integer"
+        }
+      },
+      "title": "RuleConfig",
+      "type": "object"
+    },
+    "SharedSettings": {
+      "additionalProperties": false,
+      "description": "Promotion defaults inherited by every configured asset.",
+      "properties": {
+        "mode": {
+          "default": "env",
+          "description": "Path layout: env is <kind>/<env>/<asset>; asset adds an asset directory.",
+          "enum": [
+            "env",
+            "asset"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "source_target": {
+          "default": "dev",
+          "description": "Source environment name.",
+          "title": "Source Target",
+          "type": "string"
+        },
+        "targets": {
+          "description": "Ordered shared target environments and replacements.",
+          "items": {
+            "$ref": "#/$defs/TargetConfig"
+          },
+          "title": "Targets",
+          "type": "array"
+        }
+      },
+      "title": "SharedSettings",
+      "type": "object"
+    },
+    "SourceCountRuleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the rule is evaluated.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "maximum_sources": {
+          "default": 12,
+          "minimum": 1,
+          "title": "Maximum Sources",
+          "type": "integer"
+        },
+        "severity": {
+          "default": "warn",
+          "description": "Outcome used when failures exceed threshold.",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0,
+          "description": "Number of Genie agents allowed to fail before error severity escalates.",
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "integer"
+        },
+        "warning_sources": {
+          "default": 9,
+          "minimum": 1,
+          "title": "Warning Sources",
+          "type": "integer"
+        }
+      },
+      "title": "SourceCountRuleConfig",
+      "type": "object"
+    },
+    "SqlCheck": {
+      "additionalProperties": false,
+      "description": "Custom SQL check; returned rows are violations.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/CheckConfig"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "description": "Unique check name; defaults the SQL filename.",
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": true,
+          "description": "Values bound to `$name` placeholders.",
+          "title": "Parameters",
+          "type": "object"
+        },
+        "sql": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "SQL file relative to this YAML file.",
+          "title": "Sql"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "SqlCheck",
+      "type": "object"
+    },
+    "SqlGuidanceRuleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the rule is evaluated.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "minimum_artifacts": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Minimum Artifacts",
+          "type": "integer"
+        },
+        "severity": {
+          "default": "warn",
+          "description": "Outcome used when failures exceed threshold.",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0,
+          "description": "Number of Genie agents allowed to fail before error severity escalates.",
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "integer"
+        }
+      },
+      "title": "SqlGuidanceRuleConfig",
+      "type": "object"
+    },
+    "TableDescriptionsRuleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the rule is evaluated.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "minimum_coverage": {
+          "default": 0.8,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Minimum Coverage",
+          "type": "number"
+        },
+        "recommended_coverage": {
+          "default": 1.0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Recommended Coverage",
+          "type": "number"
+        },
+        "severity": {
+          "default": "warn",
+          "description": "Outcome used when failures exceed threshold.",
+          "enum": [
+            "warn",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0,
+          "description": "Number of Genie agents allowed to fail before error severity escalates.",
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "integer"
+        }
+      },
+      "title": "TableDescriptionsRuleConfig",
+      "type": "object"
+    },
+    "TargetConfig": {
+      "additionalProperties": false,
+      "description": "Shared promotion settings for one target environment.",
+      "properties": {
+        "name": {
+          "description": "Target environment name, such as test or prod.",
+          "title": "Name",
+          "type": "string"
+        },
+        "replacements": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Literal substitutions applied recursively to JSON string values.",
+          "title": "Replacements",
+          "type": "object"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "TargetConfig",
+      "type": "object"
+    }
+  },
+  "$id": "https://schemas.lamp-ops.dev/lamp-config.json",
+  "additionalProperties": false,
+  "description": "Root model for lamp_config.yaml.",
+  "properties": {
+    "assets": {
+      "$ref": "#/$defs/AssetsConfig"
+    },
+    "dab_resource_path": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Bundle resource YAML directory, relative to the configuration file.",
+      "title": "Dab Resource Path"
+    },
+    "lamp_policies": {
+      "description": "Policy checks; also the only key of policy YAML files. SQL paths are relative to the file declaring them. Used when neither --policy-path nor LAMP_POLICY_PATH is set.",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/SqlCheck"
+          },
+          {
+            "$ref": "#/$defs/DenyResourceCheck"
+          },
+          {
+            "$ref": "#/$defs/RequireTagsCheck"
+          },
+          {
+            "$ref": "#/$defs/RequirePresetTagsCheck"
+          },
+          {
+            "$ref": "#/$defs/RequirePermissionsCheck"
+          },
+          {
+            "$ref": "#/$defs/RequireBundlePermissionsCheck"
+          },
+          {
+            "$ref": "#/$defs/RequireMutatorsCheck"
+          },
+          {
+            "$ref": "#/$defs/RequireFieldsCheck"
+          },
+          {
+            "$ref": "#/$defs/ForbidFieldsCheck"
+          },
+          {
+            "$ref": "#/$defs/AllowedFieldValuesCheck"
+          }
+        ]
+      },
+      "title": "Lamp Policies",
+      "type": "array"
+    },
+    "lint": {
+      "$ref": "#/$defs/LintConfig"
+    },
+    "policy_path": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Policy checks directory, YAML or SQL file, relative to the configuration file; defaults to an existing policies directory beside it. Used when neither --policy-path nor LAMP_POLICY_PATH is set.",
+      "title": "Policy Path"
+    },
+    "root_path": {
+      "default": ".",
+      "description": "Root relative to this config file.",
+      "format": "path",
+      "title": "Root Path",
+      "type": "string"
+    },
+    "settings": {
+      "$ref": "#/$defs/SharedSettings",
+      "description": "Promotion defaults shared by all assets."
+    }
+  },
+  "title": "Lamp Configuration",
+  "type": "object"
+}
