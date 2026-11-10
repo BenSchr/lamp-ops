@@ -1,6 +1,6 @@
 [project]
 name = "lamp-ops"
-version = "0.0.1"
+version = "0.0.2"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
@@ -8,7 +8,8 @@ license-files = ["LICENSE"]
 authors = [{ name = "BenSchr" }]
 dependencies = [
   "databricks-sdk>=0.140.0",
-  "pydantic-settings>=2.15.0",
+  "duckdb>=2.0.0",
+  "pydantic>=2.14.2",
   "pyyaml>=6.0.3",
   "rich>=15.0.0",
   "typer>=0.27.2",
@@ -22,8 +23,12 @@ Repository = "https://github.com/benschr/lamp-ops"
 [project.scripts]
 lamp = "lamp_ops.cli:app"
 
+[project.optional-dependencies]
+bundles = ["databricks-bundles>=1.22.1"]
+
 [dependency-groups]
 dev = [
+  "databricks-bundles>=1.22.1",
   "pytest>=9.1.1",
 ]
 

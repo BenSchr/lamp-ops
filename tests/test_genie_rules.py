@@ -9,7 +9,8 @@ import pytest
 import yaml
 from databricks.sdk import WorkspaceClient
 
-from lamp_ops.config import LampError, SourceCountRuleConfig, load_config
+from lamp_ops.config import SourceCountRuleConfig, load_config
+from lamp_ops.errors import LampError
 from lamp_ops.linting.genie.rules import source_count
 from lamp_ops.linting.genie.scanner import lint_genie
 
@@ -51,7 +52,6 @@ def test_threshold_counts_failing_agents_before_error(tmp_path: Path) -> None:
     config_path.write_text(
         yaml.safe_dump(
             {
-                "schema_version": 2,
                 "dab_resource_path": "resources/genie_agents",
                 "assets": {"genie": {"path": "genie"}},
                 "lint": {
@@ -124,7 +124,7 @@ def test_bundle_description_uses_file_path_then_key_and_indexes_once(
         reads.append(stream)
         return original(stream)
 
-    monkeypatch.setattr("lamp_ops.linting.genie.scanner.yaml.safe_load", tracked_load)
+    monkeypatch.setattr("lamp_ops.linting.genie.bundle.yaml.safe_load", tracked_load)
     reports = lint_genie(config, offline=True)
     assert len(reads) == 1
     assert [report.checks[0].status for report in reports] == ["pass", "pass"]
@@ -209,7 +209,6 @@ def shared_source_config(tmp_path: Path) -> Path:
     config_path.write_text(
         yaml.safe_dump(
             {
-                "schema_version": 2,
                 "assets": {"genie": {"path": "genie"}},
                 "lint": {"genie": {}},
             }

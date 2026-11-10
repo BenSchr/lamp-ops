@@ -17,8 +17,7 @@ def bundle(tmp_path: Path) -> Path:
         '{"version": 2, "data_sources": {"tables": []}}', encoding="utf-8"
     )
     (tmp_path / "lamp_config.yaml").write_text(
-        """schema_version: 2
-root_path: src
+        """root_path: src
 settings:
   mode: env
   source_target: dev

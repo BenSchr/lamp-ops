@@ -9,7 +9,7 @@ from typing import Annotated
 
 import typer
 
-from lamp_ops.config import LampError
+from lamp_ops.errors import LampError
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,7 @@ class CliState:
 
 app = typer.Typer(
     no_args_is_help=True,
-    help="Promote and lint Databricks assets.",
+    help="Promote, lint, and check policies for Databricks assets.",
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
@@ -34,7 +34,7 @@ def main(
     ] = None,
     debug: Annotated[bool, typer.Option(help="Show full tracebacks on errors.")] = False,
 ) -> None:
-    """Promote and lint Databricks dashboard and Genie assets."""
+    """Promote and lint assets, or check bundle policies."""
     ctx.obj = CliState(config, debug)
 
 
@@ -54,13 +54,14 @@ def guarded[T](ctx: typer.Context, operation: Callable[[], T]) -> T:
 
 from lamp_ops.commands import config as config_commands
 from lamp_ops.commands import lint as lint_commands
+from lamp_ops.commands import policy as policy_commands
 from lamp_ops.commands import promote as promote_commands
-from lamp_ops.commands.rub import rub
 
 app.add_typer(promote_commands.app, name="promote")
 app.add_typer(config_commands.app, name="config")
+app.command(name="policy")(policy_commands.policy)
 app.command(name="lint")(lint_commands.lint)
-app.command()(rub)
+app.command(name="rub", help="Polish assets with the same checks as `lint`.")(lint_commands.lint)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,219 @@
 {
-  "datasets": ["my_catalog_dev"],
-  "pages": []
+  "datasets": [
+    {
+      "name": "sales",
+      "displayName": "Sales metrics",
+      "asset_name": "lamp_ops_dev.base.sales_metrics"
+    },
+    {
+      "name": "products",
+      "displayName": "Product metrics",
+      "asset_name": "lamp_ops_dev.base.product_metrics"
+    }
+  ],
+  "pages": [
+    {
+      "name": "overview",
+      "displayName": "Sales overview",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {"lines": ["# Lamp Ops sales demo\n"]}
+          },
+          "position": {"x": 0, "y": 0, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "subtitle",
+            "multilineTextboxSpec": {
+              "lines": ["Synthetic orders over the last 90 days. A Europe discount creates a revenue dip. All amounts are USD.\n"]
+            }
+          },
+          "position": {"x": 0, "y": 1, "width": 12, "height": 1}
+        },
+        {
+          "widget": {
+            "name": "revenue",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "sales",
+                "fields": [{"name": "revenue", "expression": "MEASURE(`total_revenue`)"}],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "revenue",
+                  "displayName": "Revenue",
+                  "format": {"type": "number-currency", "currencyCode": "USD", "decimalPlaces": {"type": "max", "places": 2}}
+                }
+              },
+              "frame": {"title": "Revenue (USD)", "showTitle": true}
+            }
+          },
+          "position": {"x": 0, "y": 2, "width": 4, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "orders",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "sales",
+                "fields": [{"name": "orders", "expression": "MEASURE(`order_count`)"}],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {"value": {"fieldName": "orders", "displayName": "Orders"}},
+              "frame": {"title": "Orders", "showTitle": true}
+            }
+          },
+          "position": {"x": 4, "y": 2, "width": 4, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "average-order",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "sales",
+                "fields": [{"name": "aov", "expression": "MEASURE(`average_order_value`)"}],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "aov",
+                  "displayName": "Average order value",
+                  "format": {"type": "number-currency", "currencyCode": "USD", "decimalPlaces": {"type": "max", "places": 2}}
+                }
+              },
+              "frame": {"title": "Average order value (USD)", "showTitle": true}
+            }
+          },
+          "position": {"x": 8, "y": 2, "width": 4, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "revenue-trend",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "sales",
+                "fields": [
+                  {"name": "order_date", "expression": "`order_date`"},
+                  {"name": "revenue", "expression": "MEASURE(`total_revenue`)"},
+                  {"name": "region", "expression": "`region`"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {"fieldName": "order_date", "scale": {"type": "temporal"}, "displayName": "Order date"},
+                "y": {"fieldName": "revenue", "scale": {"type": "quantitative"}, "displayName": "Revenue (USD)"},
+                "color": {"fieldName": "region", "scale": {"type": "categorical"}, "displayName": "Region"}
+              },
+              "frame": {"title": "Daily revenue by region", "showTitle": true}
+            }
+          },
+          "position": {"x": 0, "y": 5, "width": 6, "height": 5}
+        },
+        {
+          "widget": {
+            "name": "product-revenue",
+            "queries": [{
+              "name": "main_query",
+              "query": {
+                "datasetName": "products",
+                "fields": [
+                  {"name": "product", "expression": "`product`"},
+                  {"name": "revenue", "expression": "MEASURE(`total_revenue`)"}
+                ],
+                "disaggregated": false
+              }
+            }],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {"fieldName": "product", "scale": {"type": "categorical"}, "displayName": "Product"},
+                "y": {"fieldName": "revenue", "scale": {"type": "quantitative"}, "displayName": "Revenue (USD)"}
+              },
+              "frame": {"title": "Revenue by product", "showTitle": true}
+            }
+          },
+          "position": {"x": 6, "y": 5, "width": 6, "height": 5}
+        }
+      ]
+    },
+    {
+      "name": "filters",
+      "displayName": "Filters",
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "date-filter",
+            "queries": [
+              {
+                "name": "sales_dates",
+                "query": {
+                  "datasetName": "sales",
+                  "fields": [{"name": "order_date", "expression": "`order_date`"}],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "product_dates",
+                "query": {
+                  "datasetName": "products",
+                  "fields": [{"name": "order_date", "expression": "`order_date`"}],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {"fieldName": "order_date", "queryName": "sales_dates"},
+                  {"fieldName": "order_date", "queryName": "product_dates"}
+                ]
+              },
+              "frame": {"title": "Order date", "showTitle": true}
+            }
+          },
+          "position": {"x": 0, "y": 0, "width": 12, "height": 2}
+        }
+      ]
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "canvasBackgroundColor": {"light": "#FCFCFC", "dark": "#1F272D"},
+      "widgetBackgroundColor": {"light": "#FFFFFF", "dark": "#11171C"},
+      "fontColor": {"light": "#11171C", "dark": "#E8ECF0"},
+      "selectionColor": {"light": "#2272B4", "dark": "#8ACAFF"},
+      "visualizationColors": ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#D55E00"],
+      "widgetHeaderAlignment": "LEFT"
+    }
+  }
 }

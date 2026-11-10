@@ -6,25 +6,33 @@ import typer
 
 from lamp_ops.cli import guarded, state
 from lamp_ops.config import load_config
-from lamp_ops.promotion import execute_plan, plan_promotion
+from lamp_ops.promotion import AssetKind, execute_plan, plan_promotion
 from lamp_ops.reporting import render_promotion
 
+DryRun = Annotated[bool, typer.Option(help="Print the plan without writing files.")]
+Force = Annotated[bool, typer.Option(help="Update targets regardless of modification time.")]
+Assets = Annotated[list[str] | None, typer.Argument(help="Optional asset names or paths.")]
 
-def promote_all(
+
+def run_promotion(
     ctx: typer.Context,
-    dry_run: Annotated[bool, typer.Option(help="Print the plan without writing files.")] = False,
-    force: Annotated[
-        bool, typer.Option(help="Update targets regardless of modification time.")
-    ] = False,
+    kinds: tuple[AssetKind, ...],
+    assets: list[str] | None,
+    *,
+    dry_run: bool,
+    force: bool,
 ) -> None:
-    """Promote all configured dashboard and Genie assets."""
-    if ctx.invoked_subcommand is not None:
-        return
-
     def operation() -> None:
         config = load_config(state(ctx).config_path)
-        plan = plan_promotion(config, ("dashboards", "genie"), force=force)
+        plan = plan_promotion(config, kinds, assets, force=force)
         execute_plan(plan, dry_run=dry_run)
         render_promotion(plan, config.root, dry_run=dry_run)
 
     guarded(ctx, operation)
+
+
+def promote_all(ctx: typer.Context, dry_run: DryRun = False, force: Force = False) -> None:
+    """Promote all configured dashboard and Genie assets."""
+    # Subcommands select assets; a group argument would swallow their names.
+    if ctx.invoked_subcommand is None:
+        run_promotion(ctx, ("dashboards", "genie"), None, dry_run=dry_run, force=force)

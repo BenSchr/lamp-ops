@@ -1,0 +1,18 @@
+targets:
+  setup:
+    resources:
+      jobs:
+        setup_demo:
+          name: Lamp Ops - setup
+          # Faster serverless startup and execution than STANDARD, at a higher cost.
+          performance_target: PERFORMANCE_OPTIMIZED
+          max_concurrent_runs: 1
+          parameters:
+            - name: catalogs
+              default: ${var.dev_catalog},${var.prod_catalog}
+            - name: schema
+              default: base
+          tasks:
+            - task_key: create_demo_data
+              notebook_task:
+                notebook_path: ../notebooks/setup_demo.py

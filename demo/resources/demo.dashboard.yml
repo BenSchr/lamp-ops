@@ -1,0 +1,15 @@
+targets:
+  dev:
+    resources: &dashboard_resources
+      dashboards:
+        demo:
+          display_name: Lamp Ops - ${var.catalog} - sales
+          warehouse_id: ${var.warehouse_id}
+          dataset_catalog: ${var.catalog}
+          dataset_schema: base
+          file_path: ../dashboards/${var.asset_dir}/demo.lvdash.json
+          permissions:
+            - level: CAN_RUN
+              group_name: account users
+  prod:
+    resources: *dashboard_resources

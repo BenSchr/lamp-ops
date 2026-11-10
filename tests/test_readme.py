@@ -1,10 +1,14 @@
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
+import scripts.update_readme as update_readme_module
 from scripts.update_readme import (
     CLI_BEGIN,
     CLI_END,
+    ENV_BEGIN,
+    ENV_END,
     LINT_BEGIN,
     LINT_END,
     ReadmeError,
@@ -26,6 +30,10 @@ old
 <!-- END GENERATED TOC -->
 
 ## Real heading
+<!-- BEGIN GENERATED ENV REFERENCE -->
+old
+<!-- END GENERATED ENV REFERENCE -->
+
 ```markdown
 ## Not a heading
 ```
@@ -49,11 +57,23 @@ old
     assert "Not a heading](" not in rendered
     assert "### `lamp promote dashboards`" in rendered
     assert "### `lamp lint`" in rendered
-    assert "--profile      -p" in rendered
+    assert "| `--profile`, `-p` | `TEXT` |  | Databricks CLI profile" in rendered
+    assert "| `--output`, `-o` | `text` \\| `json` | `text` |" in rendered
+    assert "| `--input` | `PATH` | required |" in rendered
+    assert "lamp promote [OPTIONS] [COMMAND] [ARGS]..." in rendered
+    assert "### `lamp config schema`" in rendered and "### `lamp config`" in rendered
+    assert "<summary>Default configuration</summary>" in rendered
     assert "### `lamp lint genie`" not in rendered
     assert "| 6 | Data source count | `source_count` |" in rendered
     assert "maximum_sources: 12" in rendered
     assert "threshold: 0" in rendered
+    assert (
+        "| `LAMP_LINT_PATH` | `--path` | `lamp lint`, `lamp rub` |" in rendered
+        and "platform path separator" in rendered
+    )
+    assert "| `LAMP_POLICY_PATH` | `--policy-path` | `lamp policy` |" in rendered
+    assert "| `LAMP_LINT_TARGET` | `--target` |" in rendered
+    assert "Env: `LAMP_LINT_TARGET`." in rendered
     assert not update_readme(readme, check=True)
 
 
@@ -61,7 +81,7 @@ def test_readme_check_detects_drift_without_writing(tmp_path: Path) -> None:
     readme = tmp_path / "Readme.md"
     original = (
         "# Project\n\n## Contents\n<!-- BEGIN GENERATED TOC -->\nold\n"
-        "<!-- END GENERATED TOC -->\n\n## Linting\n"
+        f"<!-- END GENERATED TOC -->\n\n{ENV_BEGIN}\nold\n{ENV_END}\n\n## Linting\n"
         f"{LINT_BEGIN}\nold\n{LINT_END}\n\n## CLI reference\n"
         f"{CLI_BEGIN}\nold\n{CLI_END}\n"
     )
@@ -73,3 +93,21 @@ def test_readme_check_detects_drift_without_writing(tmp_path: Path) -> None:
 def test_readme_rejects_missing_markers() -> None:
     with pytest.raises(ReadmeError, match="Expected exactly one"):
         rendered_readme("# Missing markers\n")
+
+
+def test_policy_table_reference_matches_real_database(monkeypatch: pytest.MonkeyPatch) -> None:
+    reference = update_readme_module.generate_policy_table_reference()
+    assert "| `modified_status` | `VARCHAR` |" in reference
+    assert "### `bundle_resources.<type>`" in reference
+    assert "| `field(document, path)` |" in reference
+
+    relations = list(update_readme_module.RELATIONS)
+    tags = relations[-1]
+    relations[-1] = replace(tags, columns={k: v for k, v in tags.columns.items() if k != "key"})
+    monkeypatch.setattr(update_readme_module, "RELATIONS", tuple(relations))
+    with pytest.raises(ReadmeError, match="Columns of resource_tags"):
+        update_readme_module.generate_policy_table_reference()
+
+    monkeypatch.setattr(update_readme_module, "RELATIONS", tuple(relations[:-1]))
+    with pytest.raises(ReadmeError, match="Documented relations"):
+        update_readme_module.generate_policy_table_reference()

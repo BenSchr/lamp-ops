@@ -7,8 +7,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from lamp_ops.config import LampError, find_config, load_config
-from lamp_ops.config_schema import generate_schema, write_schema
+from lamp_ops.config import find_config, load_config
+from lamp_ops.config_schema import generate_schema
+from lamp_ops.errors import LampError
 from lamp_ops.promotion import discover_assets, execute_plan, plan_promotion
 
 
@@ -24,7 +25,7 @@ def test_loads_config_relative_to_its_file(bundle: Path, monkeypatch: pytest.Mon
 )
 def test_discovers_config_variants_in_ancestors(tmp_path: Path, name: str) -> None:
     path = tmp_path / name
-    path.write_text("schema_version: 2\n", encoding="utf-8")
+    path.write_text("{}\n", encoding="utf-8")
     child = tmp_path / "nested"
     child.mkdir()
     assert find_config(child) == path
@@ -44,19 +45,21 @@ def test_rejects_unsafe_root(bundle: Path, root_path: str) -> None:
         load_config(config_path)
 
 
-def test_schema_is_complete_and_safe_to_write(bundle: Path) -> None:
+def test_schema_is_complete(bundle: Path) -> None:
     schema = generate_schema()
     assert schema["title"] == "Lamp Configuration"
-    assert schema["x-lamp-schema-version"] == "2.0"
     assert "assets" in schema["properties"]
     assert "dab_resource_path" in schema["properties"]
     assert "dab_resource_path" not in schema["$defs"]["GenieLintConfig"]["properties"]
-    output = bundle / "schema/lamp.json"
-    write_schema(output)
-    assert json.loads(output.read_text(encoding="utf-8"))["title"] == "Lamp Configuration"
-    with pytest.raises(LampError, match="overwrite"):
-        write_schema(output)
-    write_schema(output, force=True)
+
+
+def test_ignores_unknown_top_level_keys(bundle: Path) -> None:
+    config_path = bundle / "lamp_config.yaml"
+    original = config_path.read_text(encoding="utf-8")
+    config_path.write_text("schema_version: 2\nfuture_setting: true\n" + original, encoding="utf-8")
+    config = load_config(config_path)
+    assert not hasattr(config, "schema_version")
+    assert generate_schema()["additionalProperties"] is False
 
 
 def test_rejects_old_nested_bundle_path(bundle: Path) -> None:
@@ -120,7 +123,6 @@ def test_asset_mode_and_per_asset_settings_override_globals(tmp_path: Path) -> N
     config_path.write_text(
         yaml.safe_dump(
             {
-                "schema_version": 2,
                 "root_path": "src",
                 "settings": {
                     "mode": "env",
@@ -175,7 +177,6 @@ def test_env_mode_is_default_and_asset_mode_adds_name_directory(tmp_path: Path) 
     config_path.write_text(
         yaml.safe_dump(
             {
-                "schema_version": 2,
                 "root_path": "src",
                 "assets": {
                     "dashboards": {},
@@ -211,8 +212,7 @@ def test_omitted_items_auto_discover_from_custom_group_paths(tmp_path: Path, mod
         source.write_text("{}", encoding="utf-8")
     config_path = tmp_path / "lamp_config.yaml"
     config_path.write_text(
-        f"""schema_version: 2
-settings:
+        f"""settings:
   mode: {mode}
 assets:
   dashboards:
