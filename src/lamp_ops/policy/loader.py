@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from lamp_ops.config import LampConfig, find_config, load_config
+from lamp_ops.config import LampConfig, load_optional_config
 from lamp_ops.errors import LampError
 from lamp_ops.policy.models import CheckConfig, PolicyCheck, PolicyPack, PresetCheck, SqlCheck
 from lamp_ops.policy.presets import compile_preset
@@ -43,12 +43,9 @@ def parse_parameters(values: list[str]) -> dict[str, Any]:
 
 def config_policy_source(config_path: Path | None) -> tuple[list[Path], LampConfig | None]:
     """Return the config policy path and inline policies, or ./policies without a config."""
-    if config_path is None:
-        try:
-            config_path = find_config()
-        except LampError:
-            return [Path("policies")], None
-    config = load_config(config_path)
+    config = load_optional_config(config_path)
+    if config is None:
+        return [Path("policies")], None
     if config.policy_path is not None:
         return [config.resolve_config_path(config.policy_path)], config
     default = config.config_path.parent / "policies"

@@ -195,6 +195,33 @@ def _merged_replacements(
     return replacements
 
 
+def _target_path(
+    config: LampConfig,
+    discovered: DiscoveredAsset,
+    target_name: str,
+    override: AssetTargetConfig | None,
+) -> Path:
+    if override and override.path:
+        return config.resolve_path(override.path)
+    base = _asset_group(config, discovered.kind).path or Path(discovered.kind)
+    mode = discovered.config.mode or config.settings.mode
+    return config.resolve_path(
+        _asset_path(base, discovered.kind, discovered.identifier, target_name, mode)
+    )
+
+
+def environment_path(
+    config: LampConfig, discovered: DiscoveredAsset, environment: str
+) -> Path | None:
+    """Return the asset's source or promoted path for `environment`, or None if not promoted."""
+    if environment == (discovered.config.source_target or config.settings.source_target):
+        return discovered.source
+    for shared, override in _targets(config, discovered):
+        if (override.name if override else shared.name) == environment:
+            return _target_path(config, discovered, environment, override)
+    return None
+
+
 def plan_promotion(
     config: LampConfig,
     kinds: tuple[AssetKind, ...],
@@ -205,17 +232,10 @@ def plan_promotion(
     tasks: list[PromotionTask] = []
     seen_targets: set[Path] = set()
     for kind in kinds:
-        group = _asset_group(config, kind)
-        base = group.path or Path(kind)
         for discovered in discover_assets(config, kind, selected):
-            mode = discovered.config.mode or config.settings.mode
             for shared, override in _targets(config, discovered):
                 target_name = override.name if override else shared.name
-                target = config.resolve_path(
-                    override.path
-                    if override and override.path
-                    else _asset_path(base, kind, discovered.identifier, target_name, mode)
-                )
+                target = _target_path(config, discovered, target_name, override)
                 replacements = _merged_replacements(shared, override)
                 if target == discovered.source:
                     raise LampError(f"Target cannot overwrite its source: {target}")

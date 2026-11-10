@@ -36,6 +36,21 @@
   bundle load time from the `lamp_replacements` bundle variable, without
   writing files or reading the Lamp configuration. They need the optional
   `databricks-bundles` package (`lamp-ops[bundles]` or a separate install).
+- `lamp lint --path` lints Genie JSON files, or directories searched recursively
+  for `*.geniespace.json`, without a Lamp configuration or the `<path>/<env>/`
+  layout, so mutator-only bundles can be linted. The new `lint.path` key
+  does the same from a configuration; a configuration, when found, still tunes
+  rules and exclusions. `--dab-resource-path` overrides `dab_resource_path`.
+- `lamp lint --target`/`-t` (default: the new `lint.target` key) lints the
+  promoted copies of configured assets for that target, and prefers that target's
+  bundle `genie_spaces` for descriptions. The text report now labels it `Target:`.
+- `LAMP_LINT_PATH` and `LAMP_LINT_TARGET` set `lamp lint --path` and `--target`
+  (over `lint.path` and `lint.target`), so CI can inject them. The README lists
+  every Lamp environment variable, generated from the CLI options.
+- Without `dab_resource_path`, `lamp lint` reads agent descriptions from the
+  nearest `resources` directory around each Genie file (up to 3 levels up and 2
+  down, within the project), so typical bundles need no resource path. Spaces a
+  discovered directory does not declare fall back to the JSON `description`.
 - `lamp lint` and `lamp policy` JSON reports share one envelope
   (`schema_version`, `command`, `generated_at`).
 - The configuration JSON Schema also validates policy YAML files and types every

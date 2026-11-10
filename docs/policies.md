@@ -43,6 +43,29 @@ SELECT resource_key, 'Schemas are managed by the platform team' AS message
 FROM resource('schemas');
 ```
 
+> [!TIP]
+> Most rules need no SQL. Built-in [policy presets](#policy-presets) cover the
+> common platform checks: denied resource types, required tags and permissions,
+> required mutators, and required, forbidden, or allowed field values. Configure
+> them in a YAML file in the same pack:
+>
+> ```yaml
+> # policies/platform.yaml
+> lamp_policies:
+>   - name: no_schemas
+>     preset: deny_resource
+>     parameters:
+>       resource_types: [schemas, catalogs]
+>
+>   - name: job_owner_tag
+>     preset: require_tags
+>     parameters:
+>       resource_types: [jobs]
+>       keys: [owner]
+> ```
+>
+> See the [preset reference](#preset-reference) for every preset and parameter.
+
 | Outcome | Exit status |
 |---|---|
 | All checks pass, or only warnings | 0 |

@@ -25,6 +25,8 @@ TOC_BEGIN = "<!-- BEGIN GENERATED TOC -->"
 TOC_END = "<!-- END GENERATED TOC -->"
 CLI_BEGIN = "<!-- BEGIN GENERATED CLI REFERENCE -->"
 CLI_END = "<!-- END GENERATED CLI REFERENCE -->"
+ENV_BEGIN = "<!-- BEGIN GENERATED ENV REFERENCE -->"
+ENV_END = "<!-- END GENERATED ENV REFERENCE -->"
 LINT_BEGIN = "<!-- BEGIN GENERATED GENIE LINT REFERENCE -->"
 LINT_END = "<!-- END GENERATED GENIE LINT REFERENCE -->"
 PRESETS_BEGIN = "<!-- BEGIN GENERATED POLICY PRESETS -->"
@@ -163,6 +165,8 @@ def _command_section(name: str, command: Any) -> str:
             description = option.help or ""
             if option.multiple and "repeatable" not in description.lower():
                 description += " Repeatable."
+            if option.envvar:
+                description += f" Env: `{option.envvar}`."
             lines.append(
                 f"| {names} | {_option_value(option)} | {_option_default(option)} | "
                 f"{_cell(description)} |"
@@ -170,18 +174,50 @@ def _command_section(name: str, command: Any) -> str:
     return "\n".join(lines)
 
 
-def generate_cli_reference() -> str:
-    """Document every command by walking the real command tree in registration order."""
-    sections = []
+def _commands() -> list[tuple[str, Any]]:
+    """Every command with its full name, walking the real tree in registration order."""
+    commands = []
     pending = [("lamp", typer.main.get_command(app))]
     while pending:
         name, command = pending.pop(0)
-        sections.append(_command_section(name, command))
+        commands.append((name, command))
         pending[:0] = [
             (f"{name} {sub_name}", sub)
             for sub_name, sub in getattr(command, "commands", {}).items()
         ]
-    return "\n\n".join(sections)
+    return commands
+
+
+def generate_cli_reference() -> str:
+    """Document every command by walking the real command tree in registration order."""
+    return "\n\n".join(_command_section(name, command) for name, command in _commands())
+
+
+def generate_env_reference() -> str:
+    """List every environment variable a Lamp option reads, from the real command tree."""
+    variables: dict[str, tuple[list[str], Any]] = {}
+    for name, command in _commands():
+        for option in command.params:
+            envvars = option.envvar if isinstance(option.envvar, (list, tuple)) else [option.envvar]
+            for envvar in filter(None, envvars):
+                commands, _ = variables.setdefault(envvar, ([], option))
+                commands.append(name)
+    if not variables:
+        raise ReadmeError("No CLI option reads an environment variable")
+    lines = ["| Variable | Option | Commands | Description |", "|---|---|---|---|"]
+    for envvar, (commands, option) in sorted(variables.items()):
+        description = option.help or ""
+        if option.multiple:
+            splitter = getattr(option.type, "envvar_list_splitter", None)
+            description += (
+                " Separate several values with whitespace."
+                if splitter is None
+                else " Separate several values with the platform path separator "
+                "(`:`, or `;` on Windows)."
+            )
+        names = ", ".join(f"`{command}`" for command in commands)
+        lines.append(f"| `{envvar}` | `{option.opts[0]}` | {names} | {_cell(description)} |")
+    return "\n".join(lines)
 
 
 def generate_lint_reference() -> str:
@@ -354,6 +390,7 @@ def rendered_policy_docs(text: str) -> str:
 def rendered_readme(text: str) -> str:
     updated = _replace(text, LINT_BEGIN, LINT_END, generate_lint_reference())
     updated = _replace(updated, CLI_BEGIN, CLI_END, generate_cli_reference())
+    updated = _replace(updated, ENV_BEGIN, ENV_END, generate_env_reference())
     return _replace(updated, TOC_BEGIN, TOC_END, generate_toc(updated))
 
 

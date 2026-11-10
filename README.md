@@ -47,6 +47,7 @@ Each step is optional: use only promotion, only linting, or only policies.
 - [Installation](#installation)
 - [Quick start](#quick-start)
 - [Configuration](#configuration)
+  - [Environment variables](#environment-variables)
   - [Paths](#paths)
   - [Layouts and overrides](#layouts-and-overrides)
   - [Editor support](#editor-support)
@@ -54,6 +55,7 @@ Each step is optional: use only promotion, only linting, or only policies.
 - [Bundle mutators](#bundle-mutators)
   - [How replacements work](#how-replacements-work)
 - [Linting](#linting)
+  - [Linting without the asset layout](#linting-without-the-asset-layout)
   - [Genie lint rule reference](#genie-lint-rule-reference)
 - [Bundle policies](#bundle-policies)
 - [AI usage](#ai-usage)
@@ -139,13 +141,33 @@ Lamp looks for `lamp_config.yaml`, `lamp_config.yml`, `.lamp_config.yaml`, or
 `.lamp_config.yml` in the current directory and its parents, or uses
 `--config PATH` (before the command).
 
+### Environment variables
+
+Options that read an environment variable use it when the option is not passed;
+an explicit option wins, and the variable wins over the Lamp configuration.
+Empty values count as unset.
+
+<!-- BEGIN GENERATED ENV REFERENCE -->
+| Variable | Option | Commands | Description |
+|---|---|---|---|
+| `LAMP_LINT_PATH` | `--path` | `lamp lint`, `lamp rub` | Genie JSON file, or directory searched recursively for *.geniespace.json; repeatable. Replaces lint.path; needs no Lamp config. Separate several values with the platform path separator (`:`, or `;` on Windows). |
+| `LAMP_LINT_TARGET` | `--target` | `lamp lint`, `lamp rub` | Target to lint: promoted copies of configured assets, and target-scoped bundle descriptions. Defaults to lint.target, then the source target. |
+| `LAMP_POLICY_PATH` | `--policy-path` | `lamp policy` | Policy directory, YAML or SQL file; repeatable. Defaults to the Lamp config policies, or ./policies without a config. Separate several values with the platform path separator (`:`, or `;` on Windows). |
+<!-- END GENERATED ENV REFERENCE -->
+
+Online `lamp lint` creates a Databricks SDK client, so the standard Databricks
+authentication variables (`DATABRICKS_CONFIG_PROFILE`, `DATABRICKS_HOST`,
+`DATABRICKS_TOKEN`, `DATABRICKS_CONFIG_FILE`, ...) apply unless `--profile` is
+given. Text output honours terminal variables such as `NO_COLOR` and `COLUMNS`.
+Bundle mutators read no environment variables.
+
 ### Paths
 
 | Setting | Relative to | Constraint |
 |---|---|---|
 | `root_path` | The config file | Must stay inside the config file's directory |
 | Asset `path`, `source`, target `path` | `root_path` | Must stay inside `root_path` |
-| `dab_resource_path`, `policy_path` | The config file | Must stay inside the config file's directory |
+| `dab_resource_path`, `policy_path`, `lint.path` | The config file | Must stay inside the config file's directory |
 
 `dab_resource_path` is deliberately relative to the config file: bundle resource
 YAML often sits beside a `src` root rather than inside it. With `root_path: src`,
@@ -285,17 +307,30 @@ uv run lamp lint --verbose --output-path reports/lint.json
 ```
 
 `lamp lint` runs every asset linter (today: Genie) on each asset's **source
-target** only, normally `dev`. `lamp rub` is an alias.
+target** only, normally `dev`. `lamp rub` is an alias. `--target`/`-t` (or
+`lint.target`) lints another target's promoted copies instead, at the paths
+`lamp promote` writes; run `lamp promote` first.
 
 - **Unity Catalog enrichment.** Table, metric-view, and column comments from
   Unity Catalog fill in missing descriptions, using the Databricks SDK
   authentication chain or `--profile`. Each source is fetched once per run.
   With `--offline`, rules that need this metadata report `skipped` with a reason.
-- **Agent descriptions** come from bundle YAML under `dab_resource_path`: the
-  `resources.genie_spaces` entry whose `file_path` matches the JSON source, or
-  else whose key matches the asset name. Without a match the check is skipped; a
-  matched resource with an empty description fails. Entries under
-  `targets.<source_target>.resources` take precedence over top-level `resources`.
+- **Agent descriptions** come from the bundle's `genie_spaces` resources: the
+  entry whose `file_path` (relative to its YAML file) matches the JSON source, or
+  else whose key matches the asset name. A matched resource with an empty
+  description fails. Entries under `targets.<target>.resources` take precedence
+  over top-level `resources`. The first source that is set wins:
+  1. `--dab-resource-path`, relative to the working directory.
+  2. `dab_resource_path` in the configuration.
+  3. The nearest `resources` directory around each Genie file: the file's
+     directory and up to 3 parents, each searched up to 2 levels down (hidden
+     directories skipped); nearer levels win. The search never goes above the
+     configuration directory, else the git root, else the working directory.
+
+  Every YAML file below the chosen directory is read. A space missing from a
+  configured or passed directory (1, 2) skips the check; one missing from a
+  discovered directory (3) falls back to the JSON's own `description`, as does
+  a file with no directory found. If discovery guesses wrong, set (1) or (2).
 - **Results** are `pass`, `warn`, `error`, or `skipped`. Text output shows
   warnings, errors, and skips; `--verbose` adds passing checks. Only `error`
   results produce a non-zero exit.
@@ -318,6 +353,45 @@ lint:
         minimum_questions: 10
         recommended_questions: 20
 ```
+
+### Linting without the asset layout
+
+Bundles that retarget Genie agents with the [bundle mutators](#bundle-mutators)
+need no `<path>/<env>/` layout, and no `lamp_config.yaml`. Pass the JSON directly:
+
+```bash
+uv run lamp lint --path genie --offline                          # recursive *.geniespace.json
+uv run lamp lint --path genie/sales.geniespace.json --offline    # one file (any *.json name)
+uv run lamp lint --path genie --dab-resource-path resources -t dev
+```
+
+Or keep a configuration only for lint settings; `lamp lint` then checks
+`lint.path` instead of the asset layout:
+
+```yaml
+dab_resource_path: resources
+lint:
+  path: genie               # or a list; relative to this file, not root_path
+  target: dev               # default --target
+  genie:
+    rules:
+      benchmarks: {enabled: false}
+```
+
+- `--path` (or `LAMP_LINT_PATH`) is repeatable and replaces `lint.path`. A directory is searched
+  recursively for `*.geniespace.json`, skipping hidden directories such as
+  `.databricks`; a file may have any `.json` name. `--path` is relative to the
+  working directory, `lint.path` to the config file. The asset name is the file
+  name without its suffix; `lamp lint sales` lints only that name.
+- Agent descriptions need no flags when a `resources` directory sits near the
+  JSON (see **Agent descriptions** above); `--dab-resource-path` picks another.
+- `--target`/`-t` (or `LAMP_LINT_TARGET`), else `lint.target`, picks the bundle target whose
+  `targets.<name>.resources.genie_spaces` entries take precedence over top-level
+  `resources`. Without one, only top-level resources are used, and a space
+  declared only under targets is skipped with a hint.
+- A configuration is optional with `--path`: when present, its `lint` rules and
+  exclusions, `dab_resource_path`, and `lint.target` still apply; its asset
+  layout and `settings` are ignored.
 
 ### Genie lint rule reference
 
@@ -555,7 +629,7 @@ lamp [OPTIONS] COMMAND [ARGS]...
 | Command | Description |
 |---|---|
 | [`policy`](#lamp-policy) | Run SQL checks; returned rows are violations. No Lamp config is required. |
-| [`lint`](#lamp-lint) | Lint all configured assets. |
+| [`lint`](#lamp-lint) | Lint configured assets, or Genie JSON from --path or lint.path. |
 | [`rub`](#lamp-rub) | Polish assets with the same checks as `lint`. |
 | [`promote`](#lamp-promote) | Plan and promote configured assets. |
 | [`config`](#lamp-config) | Inspect Lamp configuration support. |
@@ -578,7 +652,7 @@ lamp policy [OPTIONS]
 | Option | Value | Default | Description |
 |---|---|---|---|
 | `--input` | `PATH` | required | JSON from databricks bundle summary -o json. |
-| `--policy-path` | `PATH` |  | Policy directory, YAML or SQL file; repeatable. Defaults to the Lamp config policies, or ./policies without a config. |
+| `--policy-path` | `PATH` |  | Policy directory, YAML or SQL file; repeatable. Defaults to the Lamp config policies, or ./policies without a config. Env: `LAMP_POLICY_PATH`. |
 | `--schema` | `PATH` |  | Optional bundle JSON Schema for typed resource tables. |
 | `--param` | `TEXT` |  | Override a bound SQL parameter as NAME=JSON; repeatable. |
 | `--target`, `-t` | `TEXT` |  | Target if absent from summary; must match if present. |
@@ -589,7 +663,7 @@ lamp policy [OPTIONS]
 
 ### `lamp lint`
 
-Lint all configured assets.
+Lint configured assets, or Genie JSON from --path or lint.path.
 
 ```text
 lamp lint [OPTIONS] [ASSETS...]
@@ -597,10 +671,13 @@ lamp lint [OPTIONS] [ASSETS...]
 
 | Argument | Description |
 |---|---|
-| `ASSETS...` | Optional asset names or paths. |
+| `ASSETS...` | Optional asset names, or root-relative paths of configured assets. |
 
 | Option | Value | Default | Description |
 |---|---|---|---|
+| `--path` | `PATH` |  | Genie JSON file, or directory searched recursively for *.geniespace.json; repeatable. Replaces lint.path; needs no Lamp config. Env: `LAMP_LINT_PATH`. |
+| `--dab-resource-path` | `PATH` |  | Bundle resource YAML directory for agent descriptions; overrides the config. |
+| `--target`, `-t` | `TEXT` |  | Target to lint: promoted copies of configured assets, and target-scoped bundle descriptions. Defaults to lint.target, then the source target. Env: `LAMP_LINT_TARGET`. |
 | `--verbose`, `-v` |  |  | Also show passing checks. |
 | `--output`, `-o` | `text` \| `json` | `text` | Console report format: text or json. |
 | `--output-path` | `PATH` |  | Write a structured report to this path. |
@@ -617,10 +694,13 @@ lamp rub [OPTIONS] [ASSETS...]
 
 | Argument | Description |
 |---|---|
-| `ASSETS...` | Optional asset names or paths. |
+| `ASSETS...` | Optional asset names, or root-relative paths of configured assets. |
 
 | Option | Value | Default | Description |
 |---|---|---|---|
+| `--path` | `PATH` |  | Genie JSON file, or directory searched recursively for *.geniespace.json; repeatable. Replaces lint.path; needs no Lamp config. Env: `LAMP_LINT_PATH`. |
+| `--dab-resource-path` | `PATH` |  | Bundle resource YAML directory for agent descriptions; overrides the config. |
+| `--target`, `-t` | `TEXT` |  | Target to lint: promoted copies of configured assets, and target-scoped bundle descriptions. Defaults to lint.target, then the source target. Env: `LAMP_LINT_TARGET`. |
 | `--verbose`, `-v` |  |  | Also show passing checks. |
 | `--output`, `-o` | `text` \| `json` | `text` | Console report format: text or json. |
 | `--output-path` | `PATH` |  | Write a structured report to this path. |

@@ -683,6 +683,40 @@
       "properties": {
         "genie": {
           "$ref": "#/$defs/GenieLintConfig"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "items": {
+                "format": "path",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Genie JSON file or directory (searched recursively for *.geniespace.json), or a list of them, relative to the configuration file (not root_path). When set, lamp lint checks these instead of the asset layout; --path replaces it.",
+          "title": "Path"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Default for lamp lint --target: configured assets are linted at their promoted path for this target, and target-scoped bundle genie_spaces are preferred. Defaults to each asset's source target; lint paths then use top-level resources.",
+          "title": "Target"
         }
       },
       "title": "LintConfig",

@@ -124,7 +124,7 @@ def test_bundle_description_uses_file_path_then_key_and_indexes_once(
         reads.append(stream)
         return original(stream)
 
-    monkeypatch.setattr("lamp_ops.linting.genie.scanner.yaml.safe_load", tracked_load)
+    monkeypatch.setattr("lamp_ops.linting.genie.bundle.yaml.safe_load", tracked_load)
     reports = lint_genie(config, offline=True)
     assert len(reads) == 1
     assert [report.checks[0].status for report in reports] == ["pass", "pass"]

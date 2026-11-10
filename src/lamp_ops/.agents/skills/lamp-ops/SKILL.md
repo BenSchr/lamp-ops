@@ -47,7 +47,8 @@ assets:
 Put sources at `dashboards/dev/sales.lvdash.json` and
 `genie/dev/sales.geniespace.json`; omitted `items` discovers all sources.
 Asset paths stay inside `root_path`; `dab_resource_path` for bundle descriptions
-is relative to the config file.
+is relative to the config file. Without it, lint searches for a nearby
+`resources` directory; pass `--dab-resource-path` if it guesses wrong.
 
 ## Examples
 
@@ -57,6 +58,13 @@ is relative to the config file.
 - `lamp lint --offline` checks source files without remote metadata; for
    Unity Catalog enrichment, select a profile with `databricks auth profiles`,
    then run `lamp lint --profile NAME`. `lamp rub` aliases `lamp lint`.
+- `lamp lint -t prod` lints promoted copies for `prod` (after `lamp promote`).
+- Without the asset layout (e.g. mutator-only bundles), lint JSON directly:
+   `lamp lint --path genie --dab-resource-path resources -t dev`. `--path` takes a
+   file or a directory (recursive `*.geniespace.json`) and needs no config. A
+   config with `lint.path` (config-relative) and `lint.target` makes plain
+   `lamp lint` do the same; its `lint` rules and exclusions still apply.
+   CI can set `LAMP_LINT_PATH` and `LAMP_LINT_TARGET` instead of the flags.
 
 ## Bundle mutators
 

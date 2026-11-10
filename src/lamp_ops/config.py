@@ -293,6 +293,22 @@ class LintConfig(BaseModel):
     """Asset lint settings."""
 
     model_config = ConfigDict(extra="forbid")
+    path: Path | list[Path] | None = Field(
+        default=None,
+        description=(
+            "Genie JSON file or directory (searched recursively for *.geniespace.json), or a "
+            "list of them, relative to the configuration file (not root_path). When set, lamp "
+            "lint checks these instead of the asset layout; --path replaces it."
+        ),
+    )
+    target: str | None = Field(
+        default=None,
+        description=(
+            "Default for lamp lint --target: configured assets are linted at their promoted "
+            "path for this target, and target-scoped bundle genie_spaces are preferred. "
+            "Defaults to each asset's source target; lint paths then use top-level resources."
+        ),
+    )
     genie: GenieLintConfig = Field(default_factory=GenieLintConfig)
 
 
@@ -360,6 +376,13 @@ class LampConfig(BaseModel):
     def config_path(self) -> Path:
         return self._config_path
 
+    @property
+    def lint_paths(self) -> list[Path]:
+        """Resolved `lint.path` entries; empty when unset."""
+        path = self.lint.path
+        values = path if isinstance(path, list) else [path]
+        return [self.resolve_config_path(value) for value in values if value is not None]
+
     def resolve_path(self, value: Path) -> Path:
         if value.is_absolute():
             raise LampError(f"Configured paths must be relative: {value}")
@@ -393,6 +416,16 @@ def find_config(start: Path | None = None) -> Path:
         if current.parent == current:
             raise LampError(f"Could not find lamp_config.yaml (or variant) from {start.resolve()}")
         current = current.parent
+
+
+def load_optional_config(path: Path | None = None) -> LampConfig | None:
+    """Load an explicit or discovered configuration, or return None when none is found."""
+    if path is None:
+        try:
+            path = find_config()
+        except LampError:
+            return None
+    return load_config(path)
 
 
 def load_config(path: Path | None = None) -> LampConfig:

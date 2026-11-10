@@ -48,7 +48,12 @@ def render_lint(report: LintReport, *, verbose: bool) -> None:
         table = Table(
             title=Text.assemble(
                 (f"{asset.kind.title()} Agent: {asset.identifier}", "bold cyan"),
-                (f"\nSource target: {asset.source_target} | File: {asset.path}", "dim"),
+                (
+                    f"\nTarget: {asset.source_target} | File: {asset.path}"
+                    if asset.source_target
+                    else f"\nFile: {asset.path}",
+                    "dim",
+                ),
             ),
             show_lines=False,
             # padding=(0, 1,1,1),

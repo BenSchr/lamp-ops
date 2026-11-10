@@ -18,7 +18,8 @@
   `databricks-bundles` is optional (the `bundles` extra or a separate install) and
   must stay aligned with the CLI.
 - `src/lamp_ops/linting/results.py` owns generic `pass|warn|error` result models.
-- `src/lamp_ops/linting/genie/` owns flat Genie static rules and scanning.
+- `src/lamp_ops/linting/genie/` owns flat Genie static rules and scanning;
+  `bundle.py` there owns `resources` directory discovery and `genie_spaces` indexing.
 - `src/lamp_ops/reporting.py` owns terminal and JSON rendering; every JSON report shares one
   envelope (`schema_version`, `command`, `generated_at`), and file outputs replace existing files.
 - `src/lamp_ops/policy/` owns external SQL/YAML checks, parameterized presets,
@@ -55,6 +56,9 @@
   only when neither `--policy-path` nor `LAMP_POLICY_PATH` is set.
 - Top-level `dab_resource_path` is relative to the config file (not `root_path`),
   stays inside its directory, and indexes bundle `genie_spaces` YAML for linting.
+  Without it (or `--dab-resource-path`), lint searches for the nearest `resources`
+  directory around each Genie file (3 levels up, 2 down, bounded by the config
+  directory, git root, or working directory).
 - Each asset group may set `path`; omitted `items` are auto-discovered below that path.
 - Asset mode `env` derives `<path>/<env>/<asset>.<suffix>`; mode `asset` derives
 	`<path>/<asset>/<env>/<asset>.<suffix>`. Global settings may be overridden per named asset.
@@ -68,6 +72,11 @@
 - `lamp lint` runs all asset linters on configured source targets only and enriches Genie
 	source metadata from Unity Catalog; `--profile`/`-p` selects Databricks auth and
 	`--offline` skips metadata-dependent rules.
+- `lamp lint --path` (file or recursive `*.geniespace.json` directory) needs no Lamp
+	configuration and ignores the asset layout; `lint.path` (config-relative, not `root_path`)
+	does the same from a config. An optional config still supplies lint rules, exclusions,
+	`dab_resource_path`, and `lint.target`. `--target` (default `lint.target`) scopes bundle
+	descriptions and, for configured assets, lints the promoted copy (`promotion.environment_path`).
 - Rich concise output always includes warnings, errors, and skipped checks; `--verbose`
 	additionally includes passing checks.
 - Add public handlers in their own `commands/` module and register them only after the root app exists.
@@ -78,7 +87,8 @@
   `--store` saves the query database to a DuckDB file for exploration.
 - Use `typing.Annotated` for Typer parameters and keep business logic outside command modules.
 - `.devcontainer/postCreateCommand.sh` runs `mise run sync` after mise-managed tools are updated.
-- Update generated README sections with `mise run readme`.
+- Update generated README sections with `mise run readme`. Option environment variables
+  (`envvar=`, `LAMP_*` names) are documented from the CLI tree automatically.
 - Bump versions with `mise run bump [level]` (default `patch`) and add a matching
   `CHANGELOG.md` entry.
 - After editing the plugin skill, run `mise run skill-sync` and check it with
