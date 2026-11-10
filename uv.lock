@@ -8,11 +8,11 @@ resolution-markers = [
 
 [[package]]
 name = "annotated-doc"
-version = "0.0.5"
+version = "0.0.6"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5a/8e/38aa427ed5402449e226975b649c5dc73ccadfefeb95e6aecb8f8ea4b6b6/annotated_doc-0.0.5.tar.gz", hash = "sha256:c7e58ce09192557605d8bbd92836d7e1d520ac9580096042c0bfd197efacf1bb", size = 10758, upload-time = "2026-07-28T13:50:58.129Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/6e/a61e86e43bb6039b31a33a8f5fba76fe1cdacf3661e7b9756d4ff1b28cdc/annotated_doc-0.0.6.tar.gz", hash = "sha256:7969bb69912085b2285849c0dcac0b4b374fd180c13cf10a87f284ffcf347bbf", size = 10767, upload-time = "2026-11-10T18:17:11.28Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3e/30/e900b21425a860e195f32e37657aa1f7c7f2b1bfb26f03ca209b90933c06/annotated_doc-0.0.5-py3-none-any.whl", hash = "sha256:117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101", size = 5302, upload-time = "2026-07-28T13:50:57.239Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/f5/3dd85d583e55be76cd02b1fc9bbec771b12d63124b01661d9535ccf8721f/annotated_doc-0.0.6-py3-none-any.whl", hash = "sha256:361ca0950cc7082f53fa69e9328409f40a62c61e57e0a47e1825a08078a58a53", size = 5293, upload-time = "2026-11-10T18:17:10.249Z" },
 ]
 
 [[package]]
@@ -323,16 +323,16 @@ wheels = [
 
 [[package]]
 name = "databricks-bundles"
-version = "1.24.0"
+version = "1.25.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f3/07/2ed4088316d8adbd1927a555dd10332e27bfbde71450ba297572a38ef47d/databricks_bundles-1.24.0.tar.gz", hash = "sha256:e4448276ad548ff26fa2649462789c2c8abf20b349648e4ee787f8820dd4d999", size = 282366, upload-time = "2026-11-04T14:49:16.938Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d7/26/67bca020725202bc113719f6f8c263b9bdc364a02c8df0367b7c97186eda/databricks_bundles-1.25.0.tar.gz", hash = "sha256:9506990890af750ec5cfa2324215664e82a86053e21fcf13734673b66b9addbc", size = 282591, upload-time = "2026-11-09T14:00:04.179Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/bc/4bffd22ffeed65c876add0b69ded82b9d64441ebe9476f1f4d2c3fa96cbe/databricks_bundles-1.24.0-py3-none-any.whl", hash = "sha256:bf7f14a67867f654922a7f2cdf9b33c5c317dc85d4f9825f1836b6e2312fb665", size = 723695, upload-time = "2026-11-04T14:49:15.177Z" },
+    { url = "https://files.pythonhosted.org/packages/69/cd/34d3471356c8f9cb2e38cf7892eefd097f1664d939e243f5bf3ec14a3a7c/databricks_bundles-1.25.0-py3-none-any.whl", hash = "sha256:9d9f2eedcb383e3acc05118b826860689ee4f11bbfebad35772f618b07180ae2", size = 723555, upload-time = "2026-11-09T14:00:02.78Z" },
 ]
 
 [[package]]
 name = "databricks-sdk"
-version = "0.162.0"
+version = "0.164.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -341,9 +341,9 @@ dependencies = [
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f0/cc/d66b74ec5747e9b9ef55b81f93dcf4ecc27852cfb877c857d915cb0a55eb/databricks_sdk-0.162.0.tar.gz", hash = "sha256:be85cca187d2181f989a821fa95bd7978bfa9618c8da9a4421c04394152085a2", size = 1237247, upload-time = "2026-11-05T04:25:42.116Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/72/60/1486361effa6b2005ed4b9e33c120c37b25a4b25f4e49da033514a922ada/databricks_sdk-0.164.0.tar.gz", hash = "sha256:bf5d6000703af299f67c9688c86a7ec2a6e64bdabf106dc031e6f210aa264f74", size = 1257576, upload-time = "2026-11-10T04:23:42.232Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7b/d3/c022627449f88b024be185d2c5a16e8d62f51c9f491abf63921cbe44571a/databricks_sdk-0.162.0-py3-none-any.whl", hash = "sha256:eae6fa5a76c21ca2a53530088a216dfad681138234173112c81833cbd41e98cd", size = 1178966, upload-time = "2026-11-05T04:25:40.074Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/d9/208cd28042bc2cd229b45e2c832de9c60660f99d2c198da1be86421fa1c7/databricks_sdk-0.164.0-py3-none-any.whl", hash = "sha256:30ba531acc6c33655ea3c8423661b5d7cdd42fb76eec187714c6924405ebdd58", size = 1199787, upload-time = "2026-11-10T04:23:40.659Z" },
 ]
 
 [[package]]
@@ -363,15 +363,15 @@ wheels = [
 
 [[package]]
 name = "google-auth"
-version = "2.62.1"
+version = "2.62.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "pyasn1-modules" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/38/d79ab09dcfc1e1638d887c8f65657619d3ebc454165c558ef79355971ce3/google_auth-2.62.1.tar.gz", hash = "sha256:3c8e1ce2553784ae17fd220e6f88df3281d86ab98019278f436d06dffab17a9e", size = 398519, upload-time = "2026-11-03T03:06:03.008Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/d4/87353e950d653d87360176363d51f316e8e368e1ddbb7ba7aa5503c30c3e/google_auth-2.62.2.tar.gz", hash = "sha256:046c61a72d3a847d6df6417a7f0d5cf054e3b82bbcb54fb1e69d47880964049c", size = 404543, upload-time = "2026-11-10T15:50:55.102Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/dd/2e11f0976ecb3ce48ef3f324837460e9ea50071fa4eb01f1e49df87d3cee/google_auth-2.62.1-py3-none-any.whl", hash = "sha256:015399a5abde39033c69404cc1c079e6d4c2de2993e164c9f4eac6e5376ad72b", size = 267975, upload-time = "2026-11-03T03:06:01.422Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/d4/0f8481baa50f75db3bb19a0df79fe19615e66eccfc3afb0b946dcb8791b3/google_auth-2.62.2-py3-none-any.whl", hash = "sha256:e9bcdb0679b6a4369ac327c5c59f06d92f7b4cd2624e7100294c14632f55a36b", size = 270150, upload-time = "2026-11-10T15:50:53.408Z" },
 ]
 
 [[package]]
@@ -394,7 +394,7 @@ wheels = [
 
 [[package]]
 name = "lamp-ops"
-version = "0.0.1"
+version = "0.0.2"
 source = { editable = "." }
 dependencies = [
     { name = "databricks-sdk" },
@@ -436,14 +436,14 @@ dev = [
 
 [[package]]
 name = "markdown-it-py"
-version = "4.2.0"
+version = "4.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "mdurl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/06/ff/7841249c247aa650a76b9ee4bbaeae59370dc8bfd2f6c01f3630c35eb134/markdown_it_py-4.2.0.tar.gz", hash = "sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49", size = 82454, upload-time = "2026-05-07T12:08:28.36Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/fc/cee2c45553c9a9bf77d8b0c391560c556d7ed756b1f0bb35eb5d48db09ea/markdown_it_py-4.3.0.tar.gz", hash = "sha256:91a58fa5b72c71a40cf7177250fd767480d7a2bb3ac426ccfb76fb90305fdaaa", size = 242701, upload-time = "2026-11-10T16:18:30.467Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl", hash = "sha256:9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a", size = 91687, upload-time = "2026-05-07T12:08:27.182Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/31/5f0ac2f1a1c67423c995c731a11cd4ad05d081a2be969d74f868bdb9cc70/markdown_it_py-4.3.0-py3-none-any.whl", hash = "sha256:7aa1511a46c39138de78d9eba92ce47e63124d8003fc98b3a351909e04239efa", size = 96951, upload-time = "2026-11-10T16:18:28.975Z" },
 ]
 
 [[package]]
@@ -752,17 +752,18 @@ wheels = [
 
 [[package]]
 name = "typer"
-version = "0.28.0"
+version = "0.29.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-doc" },
     { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "pydantic" },
     { name = "rich" },
     { name = "shellingham" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ad/8f/21021859316f44289101638dc74d82e13d722d8533e4b8708a3ab7c8461a/typer-0.28.0.tar.gz", hash = "sha256:69ab84ef79fd601cff071bbd2566d855ecadfd93adbc4b3360b9924359bdd857", size = 205415, upload-time = "2026-11-06T08:37:19.779Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ed/db/401793a0d5345409a28de2c571d4ef8bea9a08700c20ea7f7b6af3b050d2/typer-0.29.0.tar.gz", hash = "sha256:6871960a1603fba66af2ff751be48a6735af6480a67660afaf2fab2f7e008ed4", size = 206371, upload-time = "2026-11-09T18:48:12.751Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/19/98/8ef60c7cd773dbab9d276a4c7bff505913a25b61acd8a9ef01ceeb70f554/typer-0.28.0-py3-none-any.whl", hash = "sha256:afd18929180b706c5e9a239f53c3c8136903553c0c2d460598bbaa924191d4ab", size = 123253, upload-time = "2026-11-06T08:37:18.611Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/3d/cc08d3cb257764101c71c47f18e2f547782d013928edc877f155cb99229d/typer-0.29.0-py3-none-any.whl", hash = "sha256:b3c3de6e06a848274dc7bd56a433499e9cf25fa1d40aa3ba4eccfec4e1624c7b", size = 121058, upload-time = "2026-11-09T18:48:11.665Z" },
 ]
 
 [[package]]
