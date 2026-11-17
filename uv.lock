@@ -323,16 +323,16 @@ wheels = [
 
 [[package]]
 name = "databricks-bundles"
-version = "1.25.0"
+version = "1.26.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d7/26/67bca020725202bc113719f6f8c263b9bdc364a02c8df0367b7c97186eda/databricks_bundles-1.25.0.tar.gz", hash = "sha256:9506990890af750ec5cfa2324215664e82a86053e21fcf13734673b66b9addbc", size = 282591, upload-time = "2026-11-09T14:00:04.179Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c1/60/b9f1f4bff623bd6844efe27c978248a47d6f0c1e96353e59f4137c1e4136/databricks_bundles-1.26.0.tar.gz", hash = "sha256:6e6219036adce732fd288eb6ca4284c24ca3e37b426b017e66c07a69ba9fdd56", size = 288057, upload-time = "2026-11-11T15:25:54.765Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/cd/34d3471356c8f9cb2e38cf7892eefd097f1664d939e243f5bf3ec14a3a7c/databricks_bundles-1.25.0-py3-none-any.whl", hash = "sha256:9d9f2eedcb383e3acc05118b826860689ee4f11bbfebad35772f618b07180ae2", size = 723555, upload-time = "2026-11-09T14:00:02.78Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/1e/ab2a96d04e23272a8690e30a58df05e0d5e78b1d0b5217baf780dfb48dc4/databricks_bundles-1.26.0-py3-none-any.whl", hash = "sha256:e9998a64afa1b4d910cd5450edfb580aa4c7f86651be8a977c373518ca3c6b95", size = 738809, upload-time = "2026-11-11T15:25:53.211Z" },
 ]
 
 [[package]]
 name = "databricks-sdk"
-version = "0.164.0"
+version = "0.167.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -341,9 +341,9 @@ dependencies = [
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/72/60/1486361effa6b2005ed4b9e33c120c37b25a4b25f4e49da033514a922ada/databricks_sdk-0.164.0.tar.gz", hash = "sha256:bf5d6000703af299f67c9688c86a7ec2a6e64bdabf106dc031e6f210aa264f74", size = 1257576, upload-time = "2026-11-10T04:23:42.232Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/14/00/089a185f6737e9eefd4086aa5a6105bbc03c26a2396c12d98aa1aa5760f7/databricks_sdk-0.167.0.tar.gz", hash = "sha256:9ed5576e1e28a94d3e47f302d5e337f3dea47d7b27bd7938b9b5e0e06f27a428", size = 1307450, upload-time = "2026-11-16T04:37:09.267Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9b/d9/208cd28042bc2cd229b45e2c832de9c60660f99d2c198da1be86421fa1c7/databricks_sdk-0.164.0-py3-none-any.whl", hash = "sha256:30ba531acc6c33655ea3c8423661b5d7cdd42fb76eec187714c6924405ebdd58", size = 1199787, upload-time = "2026-11-10T04:23:40.659Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/c8/e46ca3eb4410c95110dd2659d1d16165d263c078dc07f0edcdc00b6b275f/databricks_sdk-0.167.0-py3-none-any.whl", hash = "sha256:be69845d5cea026f35aa681ae19bf92ee82212c954a7a6b51055e715a383ad9d", size = 1249565, upload-time = "2026-11-16T04:37:07.373Z" },
 ]
 
 [[package]]
@@ -394,7 +394,7 @@ wheels = [
 
 [[package]]
 name = "lamp-ops"
-version = "0.0.2"
+version = "0.0.3"
 source = { editable = "." }
 dependencies = [
     { name = "databricks-sdk" },
@@ -752,7 +752,7 @@ wheels = [
 
 [[package]]
 name = "typer"
-version = "0.29.0"
+version = "0.29.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-doc" },
@@ -761,9 +761,9 @@ dependencies = [
     { name = "rich" },
     { name = "shellingham" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ed/db/401793a0d5345409a28de2c571d4ef8bea9a08700c20ea7f7b6af3b050d2/typer-0.29.0.tar.gz", hash = "sha256:6871960a1603fba66af2ff751be48a6735af6480a67660afaf2fab2f7e008ed4", size = 206371, upload-time = "2026-11-09T18:48:12.751Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6c/aa/0de7986aa1fa856adb961c67345189b97d13f6e250b34ba68884df865f07/typer-0.29.1.tar.gz", hash = "sha256:ab6eb3880bf67ce96147734717f9ec333c06f66e361f3ea947d0be43da39f242", size = 205843, upload-time = "2026-11-11T09:18:39.782Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/3d/cc08d3cb257764101c71c47f18e2f547782d013928edc877f155cb99229d/typer-0.29.0-py3-none-any.whl", hash = "sha256:b3c3de6e06a848274dc7bd56a433499e9cf25fa1d40aa3ba4eccfec4e1624c7b", size = 121058, upload-time = "2026-11-09T18:48:11.665Z" },
+    { url = "https://files.pythonhosted.org/packages/05/ff/51969745f31cea6bcd12151e668febcf979656316e67a7755942267c1273/typer-0.29.1-py3-none-any.whl", hash = "sha256:00dbc549c13428bec1be55fe1f4d0fb8c6637a310e4f178ef14abe9534ee7b58", size = 121064, upload-time = "2026-11-11T09:18:38.671Z" },
 ]
 
 [[package]]

@@ -111,6 +111,34 @@ def test_promote_dry_run_stale_and_force(bundle: Path) -> None:
     assert "2 updated" in forced.output
 
 
+@pytest.mark.parametrize("state", ["missing", "empty"])
+def test_promote_ignores_missing_or_empty_asset_folders(bundle: Path, state: str) -> None:
+    genie = bundle / "src/genie"
+    for path in genie.rglob("*.geniespace.json"):
+        path.unlink()
+    if state == "missing":
+        (genie / "dev").rmdir()
+        genie.rmdir()
+
+    promoted = invoke(bundle, "promote")
+    assert promoted.exit_code == 0, promoted.output
+    assert "2 created" in promoted.output
+    assert "genie:" not in promoted.output
+
+    only_genie = invoke(bundle, "promote", "genie")
+    assert only_genie.exit_code == 0, only_genie.output
+    assert "No assets to promote." in only_genie.output
+    assert "0 created" in only_genie.output
+
+
+def test_promote_without_any_assets_succeeds(bundle: Path) -> None:
+    for path in (bundle / "src").rglob("*.json"):
+        path.unlink()
+    result = invoke(bundle, "promote", "--dry-run")
+    assert result.exit_code == 0, result.output
+    assert "No assets to promote." in result.output
+
+
 @pytest.mark.parametrize("command", [("promote",), ("promote", "genie")])
 @pytest.mark.parametrize("with_replacements", [False, True])
 def test_genie_promotion_sorts_sources_after_replacement(
@@ -308,14 +336,38 @@ def test_warning_is_non_blocking(bundle: Path) -> None:
     assert "1 warn" in result.output
 
 
-def test_lint_exclusion_fails_clearly(bundle: Path) -> None:
+def test_lint_without_assets_reports_none_found(bundle: Path) -> None:
     config = bundle / "lamp_config.yaml"
     values = yaml.safe_load(config.read_text(encoding="utf-8"))
     values["lint"]["genie"] = {"exclusions": ["sales"]}
     config.write_text(yaml.safe_dump(values), encoding="utf-8")
+    excluded = invoke(bundle, "lint", "--offline")
+    assert excluded.exit_code == 0, excluded.output
+    assert "No assets to lint." in excluded.output
+
+    report = json.loads(invoke(bundle, "lint", "--offline", "-o", "json").output)
+    assert report["assets"] == []
+    assert report["summary"]["assets"] == 0
+
+
+@pytest.mark.parametrize("state", ["missing", "empty"])
+def test_lint_ignores_missing_or_empty_genie_folder(bundle: Path, state: str) -> None:
+    genie = bundle / "src/genie"
+    (genie / "dev/sales.geniespace.json").unlink()
+    if state == "missing":
+        (genie / "dev").rmdir()
+        genie.rmdir()
     result = invoke(bundle, "lint", "--offline")
-    assert result.exit_code == 1
-    assert "No non-excluded genie assets" in result.output
+    assert result.exit_code == 0, result.output
+    assert "No assets to lint." in result.output
+
+
+def test_lint_empty_path_directory_reports_none_found(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "empty").mkdir()
+    result = runner.invoke(app, ["lint", "--offline", "--path", "empty"])
+    assert result.exit_code == 0, result.output
+    assert "No assets to lint." in result.output
 
 
 def test_lint_and_rub_expose_databricks_options(bundle: Path) -> None:
@@ -489,7 +541,6 @@ def test_lint_path_uses_discovered_config_to_tune_rules(tmp_path: Path, monkeypa
     [
         (("other", "--path", "genie"), "Genie asset not found in lint paths: other"),
         (("--path", "missing"), "Genie path not found"),
-        (("--path", "empty"), "No *.geniespace.json files found below empty"),
         (("--path", "notes.txt"), "Expected a Genie JSON file"),
         (("--path", "genie", "--dab-resource-path", "nope"), "Bundle resource directory not found"),
         ((), "pass --path to lint Genie JSON"),

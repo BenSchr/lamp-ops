@@ -3,7 +3,7 @@
 <p align="center"><img src="assets/logo_wordmark.png" alt="Lamp Ops logo" width="560"></p>
 
 Lamp Ops (`lamp`) helps you ship Databricks AI/BI dashboards and Genie agents
-through dev, test, and prod with Databricks Asset Bundles (DABs). Author an asset
+through dev, test, and prod with Databricks Declarative Automation Bundles (DABs). Author an asset
 once in your source environment; Lamp retargets it for every other environment
 and checks it before it reaches users.
 
@@ -236,6 +236,10 @@ Each target file is classified before anything is written:
   replacements. Other arrays, including all dashboard arrays, keep their order.
 - Malformed Genie source entries fail promotion instead of being skipped.
 - Source files are never modified. Use `--force` to rewrite a skipped target.
+- A missing or empty `dashboards` or `genie` folder is not an error: teams using
+  only one asset kind (or none yet) promote what exists, and an empty plan
+  reports `No assets to promote.` Explicitly configured `items` and named
+  assets must still exist.
 
 ## Bundle mutators
 
@@ -309,7 +313,9 @@ uv run lamp lint --verbose --output-path reports/lint.json
 `lamp lint` runs every asset linter (today: Genie) on each asset's **source
 target** only, normally `dev`. `lamp rub` is an alias. `--target`/`-t` (or
 `lint.target`) lints another target's promoted copies instead, at the paths
-`lamp promote` writes; run `lamp promote` first.
+`lamp promote` writes; run `lamp promote` first. With no Genie assets (a
+missing or empty folder or `--path` directory, or everything excluded), lint
+reports `No assets to lint.` and succeeds; a missing `--path` still fails.
 
 - **Unity Catalog enrichment.** Table, metric-view, and column comments from
   Unity Catalog fill in missing descriptions, using the Databricks SDK

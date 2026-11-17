@@ -1,3 +1,15 @@
+# 0.0.3 (2026-11-17)
+
+## Fixes
+
+- `lamp promote` no longer fails when the `dashboards` or `genie` folder is
+  missing, empty, or fully excluded; it promotes the assets that exist and
+  reports `No assets to promote.` when there are none.
+- `lamp lint` likewise reports `No assets to lint.` and exits 0 when there are
+  no Genie assets: a missing or empty `genie` folder, an empty `--path` or
+  `lint.path` directory, or every asset excluded. The JSON report then has an
+  empty `assets` list. A `--path` that does not exist still fails.
+
 # 0.0.2 (2026-11-10)
 
 ## Breaking changes

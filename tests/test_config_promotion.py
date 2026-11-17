@@ -111,8 +111,7 @@ def test_exclusions_apply_before_tasks(bundle: Path) -> None:
         encoding="utf-8",
     )
     config = load_config(config_path)
-    with pytest.raises(LampError, match="No non-excluded"):
-        plan_promotion(config, ("dashboards",))
+    assert plan_promotion(config, ("dashboards",)).tasks == ()
 
 
 def test_asset_mode_and_per_asset_settings_override_globals(tmp_path: Path) -> None:

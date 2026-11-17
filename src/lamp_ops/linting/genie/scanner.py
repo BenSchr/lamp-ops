@@ -102,7 +102,8 @@ def _configured_sources(
 ) -> list[GenieSource]:
     """Resolve configured assets at their source path, or at their promoted `target` path."""
     sources = []
-    for asset in discover_assets(config, "genie", selected):
+    assets = discover_assets(config, "genie", selected)
+    for asset in assets:
         environment = target or asset.config.source_target or config.settings.source_target
         path = environment_path(config, asset, environment)
         if path is None:
@@ -115,7 +116,7 @@ def _configured_sources(
         sources.append(
             GenieSource(asset.identifier, path, path.relative_to(config.root), environment)
         )
-    if not sources:
+    if assets and not sources:
         raise LampError(f"No configured genie assets are promoted to target {target}")
     return sources
 
@@ -148,8 +149,6 @@ def _path_sources(paths: Sequence[Path], target: str | None) -> list[GenieSource
                 if file.is_file()
                 and not any(part.startswith(".") for part in file.relative_to(path).parts[:-1])
             )
-            if not files:
-                raise LampError(f"No *{GENIE_SUFFIX} files found below {value}")
         elif path.is_file():
             if path.suffix != ".json":
                 raise LampError(f"Expected a Genie JSON file: {value}")
@@ -280,6 +279,7 @@ def lint_genie(
 ) -> tuple[AssetReport, ...]:
     """Lint Genie JSON from `paths`, configured `lint.path`, or the configured asset layout.
 
+    Returns no reports when nothing is found or everything is excluded.
     Paths need no configuration; `selected` then filters by asset name. `target`
     (default: `lint.target`) selects target-scoped bundle resources and, for configured
     assets, their promoted copy. Agent descriptions come from `dab_resource_path`
@@ -298,7 +298,7 @@ def lint_genie(
         sources = _configured_sources(config, selected, target)
     sources = [source for source in sources if not _is_excluded(config, source)]
     if not sources:
-        raise LampError("No non-excluded genie assets found for linting")
+        return ()
     lint_config = config.lint.genie if config else GenieLintConfig()
     bundle_for = (
         _bundle_lookup(config, dab_resource_path)

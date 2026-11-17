@@ -1,6 +1,6 @@
 [project]
 name = "lamp-ops"
-version = "0.0.2"
+version = "0.0.3"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
@@ -42,7 +42,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
-lint.ignore = ["RET504", "ISC004", "SIM105", "EXE002"]
+lint.ignore = ["RET504", "ISC004", "SIM105", "EXE001", "EXE002"]
 
 [tool.uv]
 package = true

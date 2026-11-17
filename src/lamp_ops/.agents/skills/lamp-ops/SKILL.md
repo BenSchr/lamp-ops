@@ -54,10 +54,12 @@ is relative to the config file. Without it, lint searches for a nearby
 
 - `lamp promote --dry-run` previews writes; `lamp promote dashboards sales`
    or `lamp promote genie sales` selects one asset. `--force` overwrites newer
-   destinations. Replacements change JSON string values, not keys.
+   destinations. Replacements change JSON string values, not keys. Missing or
+   empty `dashboards`/`genie` folders are skipped, not errors.
 - `lamp lint --offline` checks source files without remote metadata; for
    Unity Catalog enrichment, select a profile with `databricks auth profiles`,
-   then run `lamp lint --profile NAME`. `lamp rub` aliases `lamp lint`.
+   then run `lamp lint --profile NAME`. `lamp rub` aliases `lamp lint`. With no
+   Genie assets it prints `No assets to lint.` and exits 0.
 - `lamp lint -t prod` lints promoted copies for `prod` (after `lamp promote`).
 - Without the asset layout (e.g. mutator-only bundles), lint JSON directly:
    `lamp lint --path genie --dab-resource-path resources -t dev`. `--path` takes a

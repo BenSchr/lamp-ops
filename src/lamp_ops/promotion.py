@@ -144,7 +144,10 @@ def discover_assets(
     kind: AssetKind,
     selected: list[str] | None = None,
 ) -> tuple[DiscoveredAsset, ...]:
-    """Resolve configured asset names or source paths."""
+    """Resolve configured asset names or source paths.
+
+    Returns an empty tuple when nothing is configured, discovered, or left after exclusions.
+    """
     group = _asset_group(config, kind)
     configured = _configured_assets(config, kind)
     by_path = {item.source: item for item in configured.values()}
@@ -164,8 +167,6 @@ def discover_assets(
     included = list(
         {item.identifier: item for item in requested if not _excluded(config, group, item)}.values()
     )
-    if not included:
-        raise LampError(f"No non-excluded {kind} assets found")
     for item in included:
         if not item.source.is_file():
             raise LampError(f"Source {kind} asset not found: {item.source}")

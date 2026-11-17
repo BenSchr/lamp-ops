@@ -9,7 +9,7 @@ import re
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args, get_origin
 
 import duckdb
 import typer.main
@@ -105,14 +105,31 @@ def _cell(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
 
 
+# Click's classic value names; Typer >= 0.29 prints `<str>`-style labels instead.
+TYPE_NAMES = {str: "TEXT", Path: "PATH", int: "INTEGER", float: "FLOAT", bool: "BOOLEAN"}
+
+
+def _value_type(param: Any) -> Any:
+    """Return the Click type (Typer < 0.29) or Typer's `TypeDescriptor` (Typer >= 0.29)."""
+    return getattr(param, "type", None) or param.type_descriptor
+
+
 def _option_value(param: Any) -> str:
     if getattr(param, "is_flag", False):
         return ""
-    choices = getattr(param.type, "choices", None)
+    value_type = _value_type(param)
+    choices = getattr(value_type, "choices", None)
     if choices:
         return " \\| ".join(f"`{choice}`" for choice in choices)
+    if hasattr(value_type, "annotation"):
+        annotation = value_type.annotation
+        if get_origin(annotation) in (list, tuple):
+            annotation = get_args(annotation)[0]
+        if annotation not in TYPE_NAMES:
+            raise ReadmeError(f"No README value name for {annotation!r} on {param.name}")
+        return f"`{TYPE_NAMES[annotation]}`"
     # Match the value names Click prints in --help.
-    return f"`{ {'str': 'TEXT'}.get(param.type.name, param.type.name.upper()) }`"
+    return f"`{ {'str': 'TEXT'}.get(value_type.name, value_type.name.upper()) }`"
 
 
 def _option_default(param: Any) -> str:
@@ -208,7 +225,7 @@ def generate_env_reference() -> str:
     for envvar, (commands, option) in sorted(variables.items()):
         description = option.help or ""
         if option.multiple:
-            splitter = getattr(option.type, "envvar_list_splitter", None)
+            splitter = getattr(_value_type(option), "envvar_list_splitter", None)
             description += (
                 " Separate several values with whitespace."
                 if splitter is None

@@ -30,6 +30,8 @@ OUTCOME_STYLES = {
 
 def render_promotion(plan: PromotionPlan, root: Path, *, dry_run: bool) -> None:
     prefix = "DRY-RUN " if dry_run else ""
+    if not plan.tasks:
+        typer.echo("No assets to promote.")
     for task in plan.tasks:
         typer.echo(
             f"{prefix}{task.action.upper()} {task.kind}:{task.identifier}:{task.target_name} "
@@ -43,6 +45,8 @@ def render_promotion(plan: PromotionPlan, root: Path, *, dry_run: bool) -> None:
 
 def render_lint(report: LintReport, *, verbose: bool) -> None:
     console = Console(highlight=False)
+    if not report.assets:
+        console.print("No assets to lint.")
     for asset in report.assets:
         counts = asset.counts
         table = Table(
